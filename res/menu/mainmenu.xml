@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="@string/mnu_send" android:id="@+id/mnuSend"  
+    	android:orderInCategory="10" ></item>
+    <item android:title="@string/mnu_clear" android:id="@+id/mnuClear" 
+    	android:orderInCategory="20"></item>
+
+    <item android:title="@string/mnu_pref" android:id="@+id/mnuPref" 
+    	android:orderInCategory="30"></item>
+
+    <item android:title="@string/mnu_exit" android:id="@+id/mnuExit" 
+    	android:orderInCategory="90"></item> 
+</menu>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="initial_msg">別のアプリで何らかのURLを開いて下さい。\n
+    ブラウザ選択ダイアログが表示されたら、このアプリを選択して下さい。\n
+    開いたURLの履歴が下に表示されます。</string>
+    
+    <string name="app_name">intent02</string>
+    
+    <string name="mnu_exit">閉じる</string>
+    <string name="mnu_send">メール送信</string>  
+    <string name="mnu_clear">全削除</string>  
+    <string name="mnu_pref">設定</string>  
+    
+    <string name="pref_to_addr1">宛先</string>
+	<string name="pref_to_addr1_summary">宛先のEmailアドレス。カンマ(,)で区切って複数登録も可能。</string>
+	<string name="pref_to_addr1_default"></string>
+
+	<string name="pref_prefix">メールの件名</string>
+	<string name="pref_prefix_summary"></string>
+	<string name="pref_prefix_default">[SendToMe] </string>
+
+	<string name="pref_footer">メール本文の末尾</string>
+	<string name="pref_footer_summary"></string>
+	<string name="pref_footer_default">Sent via Send To Me!</string>
+    
+	<string name="msg_invalid_to_addr">宛先のEmailアドレスが空白かまたは正しくありません。Emailアドレスを設定して下さい。\n(例： youremail@gmail.com)</string>
+
+</resources>

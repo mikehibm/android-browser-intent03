@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android" android:orderingFromXml="true">
+    <PreferenceCategory android:orderingFromXml="true">
+    
+        <EditTextPreference android:title="@string/pref_to_addr1" 
+        	android:key="to_addr1" 
+        	android:dialogTitle="@string/pref_to_addr1" 
+        	android:summary="@string/pref_to_addr1_summary" 
+        	android:defaultValue="@string/pref_to_addr1_default" 
+        	android:order="10" />
+        	
+        <EditTextPreference android:title="@string/pref_prefix" 
+        	android:key="prefix" 
+        	android:dialogTitle="@string/pref_prefix"
+        	android:summary="@string/pref_prefix_summary"
+        	android:defaultValue="@string/pref_prefix_default" 
+        	android:order="20" />
+        	
+        <EditTextPreference android:title="@string/pref_footer" 
+        	android:key="footer"  
+        	android:dialogTitle="@string/pref_footer"
+        	android:summary="@string/pref_footer_summary"
+        	android:defaultValue="@string/pref_footer_default" 
+        	android:order="30" />
+        	
+    </PreferenceCategory>
+</PreferenceScreen>

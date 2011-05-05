@@ -1,0 +1,7 @@
+intent03
+----------------------
+Sample program that receives "View in browser" intent, save it to ListView and re-send the same intent to the standard 
+browser.
+
+This version saves list data to local SQLite database.
+
