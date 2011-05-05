@@ -4,7 +4,7 @@
     ブラウザ選択ダイアログが表示されたら、このアプリを選択して下さい。\n
     開いたURLの履歴が下に表示されます。</string>
     
-    <string name="app_name">intent02</string>
+    <string name="app_name">intent03</string>
     
     <string name="mnu_exit">閉じる</string>
     <string name="mnu_send">メール送信</string>  

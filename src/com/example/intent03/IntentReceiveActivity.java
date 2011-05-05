@@ -2,8 +2,10 @@ package com.example.intent03;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -18,6 +20,9 @@ public class IntentReceiveActivity extends Activity {
 
 	//リストに表示する項目を保持する配列。（staticでないと毎回クリアされてしまう。）
 	static ArrayAdapter<String> adapter;			
+	
+	private final static String DBNAME = "mydata.db";
+	private final static String TBL_HISTORY = "history";
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,7 @@ public class IntentReceiveActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+
 		showCount();
 	}
 	
@@ -49,7 +55,9 @@ public class IntentReceiveActivity extends Activity {
 			
     		//追加済みでなければリスト表示用の配列に追加
 			if (findUrl(url) < 0){
-				adapter.insert(url, 0);				
+				adapter.insert(url, 0);			
+				
+				saveToDB(url);
 			}
 			
 			//標準ブラウザで開く
@@ -57,11 +65,35 @@ public class IntentReceiveActivity extends Activity {
 			startActivity(intent);
     	}
 
-    	showCount();
 	}
 	
+	private void saveToDB(String url) {
+		SQLiteDatabase db;
+		String path = "/data/data/" + getPackageName() + "/" + DBNAME;
+		db = SQLiteDatabase.openOrCreateDatabase(path, null);
+		
+		createTable(db);
+		
+		insertHistory(db, url);
+		
+		db.close();
+	}
+
+	private void insertHistory(SQLiteDatabase db, String url) {
+		ContentValues values = new ContentValues();
+		values.put("url", url);
+		values.put("title", "");
+		db.insert(TBL_HISTORY, null, values);
+	}
+
+	private void createTable(SQLiteDatabase db) {
+		String sql = "CREATE TABLE IF NOT EXISTS " + TBL_HISTORY
+					+ " (_id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, title TEXT);";
+		db.execSQL(sql);
+	}
+
+	//TextViewに件数（または初期メッセージ）を表示
 	private void showCount(){
-		//TextViewに件数を表示
 		TextView txt = (TextView)findViewById(R.id.txtCount);
     	if (adapter.getCount() > 0){
     		txt.setText("Count: " + adapter.getCount());
@@ -125,26 +157,27 @@ public class IntentReceiveActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 	
-	private void sendEmailAll(){
-		String url = "";
-		for (int i = 0; i < adapter.getCount() ; i++) {
-			url += adapter.getItem(i) + "\n\n";
-		}
-		sendEmail(url);
-	}
-	
 	private void openPref() {
 		Intent intent = new Intent(this, Pref.class); 
         startActivity(intent);
 	}
 	
-	private void sendEmail(String msg){
+	private void sendEmailAll(){
+		String msg = "";
+		for (int i = 0; i < adapter.getCount() ; i++) {
+			msg += adapter.getItem(i) + "\n\n";
+		}
+		startEmailActivity(msg);
+	}
+	
+	//SENDTOインテントを発行してEmail作成画面を呼び出す。
+	private void startEmailActivity(String msg){
 		try {
 			String to_addr = Pref.getToAddr1(this); 
 			String prefix = Pref.getPrefix(this); 
 			String footer = Pref.getFooter(this); 
 				
-			ValidateBeforeSend(to_addr, prefix, footer);
+			ValidateBeforeSend(to_addr);
 
 			String subject = prefix; 
 			String message = msg + "\n\n" + footer;
@@ -171,7 +204,7 @@ public class IntentReceiveActivity extends Activity {
 	}
 	
 	// Preference設定をValidateする。
-	private void ValidateBeforeSend(String to_addr, String prefix, String footer) throws Exception {
+	private void ValidateBeforeSend(String to_addr) throws Exception {
 		if (to_addr == null || "".equals(to_addr)){
 			throw new Exception(getString(R.string.msg_invalid_to_addr));
 		}
