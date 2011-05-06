@@ -4,7 +4,7 @@
     ブラウザ選択ダイアログが表示されたら、このアプリを選択して下さい。\n
     開いたURLの履歴が下に表示されます。</string>
     
-    <string name="app_name">intent03</string>
+    <string name="app_name">URL History</string>
     
     <string name="mnu_exit">閉じる</string>
     <string name="mnu_send">メール送信</string>  
@@ -17,12 +17,12 @@
 
 	<string name="pref_prefix">メールの件名</string>
 	<string name="pref_prefix_summary"></string>
-	<string name="pref_prefix_default">[SendToMe] </string>
+	<string name="pref_prefix_default">[URL History] </string>
 
 	<string name="pref_footer">メール本文の末尾</string>
 	<string name="pref_footer_summary"></string>
-	<string name="pref_footer_default">Sent via Send To Me!</string>
+	<string name="pref_footer_default">---\nSent by URL History.</string>
     
-	<string name="msg_invalid_to_addr">宛先のEmailアドレスが空白かまたは正しくありません。Emailアドレスを設定して下さい。\n(例： youremail@gmail.com)</string>
+	<string name="msg_invalid_to_addr">宛先のEmailアドレスが空白かまたは正しくありません。設定を開いてEmailアドレスを入力して下さい。\n(例： youremail@gmail.com)</string>
 
 </resources>

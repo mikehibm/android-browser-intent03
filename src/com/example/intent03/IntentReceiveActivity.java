@@ -1,11 +1,11 @@
 package com.example.intent03;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -41,17 +41,24 @@ public class IntentReceiveActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 
-		showCount();
+		showList();
 	}
 	
 	private void processIntent(Intent intent) {
     	
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
     		
+    		//URLを取得。
 			String url = intent.getDataString();
-			HistoryDb.save(url, "");
-			
-			adapter.add(url);
+
+			//データベースに保存。
+			try {
+				HistoryDb.save(url, "");
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+		    	showErrorDialog(e);
+			}
 			
 			//標準ブラウザで開く
 			intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
@@ -59,20 +66,43 @@ public class IntentReceiveActivity extends Activity {
     	}
 	}
 	
-	//TextViewに件数（または初期メッセージ）を表示
-	private void showCount(){
-		TextView txt = (TextView)findViewById(R.id.txtCount);
-    	if (adapter.getCount() > 0){
-    		txt.setText("Count: " + adapter.getCount());
-    	} else {
-    		txt.setText(R.string.initial_msg);
-    	}
+	//データベースから全件取得してListViewに表示する。
+	private void showList() {
+		
+		try {
+			//DBから全件取得。
+			ArrayList<HistoryDb> array;
+			array = HistoryDb.selectAll();
+
+			//ListViewに表示。
+			adapter.clear();
+			for (HistoryDb hist : array) {
+				adapter.add(hist.url);
+			}
+
+			//TextViewに件数（または初期メッセージ）を表示
+			TextView txt = (TextView)findViewById(R.id.txtCount);
+	    	if (adapter.getCount() > 0){
+	    		txt.setText("Count: " + adapter.getCount());
+	    	} else {
+	    		txt.setText(R.string.initial_msg);
+	    	}
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+	    	showErrorDialog(e);
+		}
 	}
-	
+
+	//データベースから全レコードを削除
 	private void clearList(){
-		HistoryDb.deleteAll();
-		adapter.clear();
-		showCount();
+		try {
+			HistoryDb.deleteAll();
+		} catch (Exception e) {
+			e.printStackTrace();
+	    	showErrorDialog(e);
+		}
+		showList();
 	}
 
 	@Override
@@ -115,11 +145,13 @@ public class IntentReceiveActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 	
+	//設定画面を開く
 	private void openPref() {
 		Intent intent = new Intent(this, Pref.class); 
         startActivity(intent);
 	}
 	
+	//Eメールを一括送信
 	private void sendEmailAll(){
 		String msg = "";
 		for (int i = 0; i < adapter.getCount() ; i++) {
@@ -150,18 +182,22 @@ public class IntentReceiveActivity extends Activity {
 		} 
 	    catch (Exception e) {
 	    	e.printStackTrace();
-				
-	    	new AlertDialog.Builder(this)
- 				.setMessage(e.getMessage())
- 				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				}).show();
+	    	showErrorDialog(e);
 	    }
 	}
 	
-	// Preference設定をValidateする。
+	//例外の内容をダイアログで表示
+	private void showErrorDialog(Exception e){
+    	new AlertDialog.Builder(this)
+			.setMessage(e.getMessage())
+			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		}).show();
+	}
+	
+	// Preference設定をチェックする。
 	private void ValidateBeforeSend(String to_addr) throws Exception {
 		if (to_addr == null || "".equals(to_addr)){
 			throw new Exception(getString(R.string.msg_invalid_to_addr));
