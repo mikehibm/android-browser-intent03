@@ -18,11 +18,7 @@ import android.widget.TextView;
 
 public class IntentReceiveActivity extends Activity {
 
-	//リストに表示する項目を保持する配列。（staticでないと毎回クリアされてしまう。）
-	static ArrayAdapter<String> adapter;			
-	
-	private final static String DBNAME = "mydata.db";
-	private final static String TBL_HISTORY = "history";
+	private static ArrayAdapter<String> adapter;			
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,6 +33,7 @@ public class IntentReceiveActivity extends Activity {
     	ListView list = (ListView)findViewById(R.id.list);
     	list.setAdapter(adapter);
 
+		HistoryDb.init(getPackageName());
     	processIntent(getIntent());
     }
 	
@@ -52,46 +49,16 @@ public class IntentReceiveActivity extends Activity {
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
     		
 			String url = intent.getDataString();
+			HistoryDb.save(url, "");
 			
-    		//追加済みでなければリスト表示用の配列に追加
-			if (findUrl(url) < 0){
-				adapter.insert(url, 0);			
-				
-				saveToDB(url);
-			}
+			adapter.add(url);
 			
 			//標準ブラウザで開く
 			intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
 			startActivity(intent);
     	}
-
 	}
 	
-	private void saveToDB(String url) {
-		SQLiteDatabase db;
-		String path = "/data/data/" + getPackageName() + "/" + DBNAME;
-		db = SQLiteDatabase.openOrCreateDatabase(path, null);
-		
-		createTable(db);
-		
-		insertHistory(db, url);
-		
-		db.close();
-	}
-
-	private void insertHistory(SQLiteDatabase db, String url) {
-		ContentValues values = new ContentValues();
-		values.put("url", url);
-		values.put("title", "");
-		db.insert(TBL_HISTORY, null, values);
-	}
-
-	private void createTable(SQLiteDatabase db) {
-		String sql = "CREATE TABLE IF NOT EXISTS " + TBL_HISTORY
-					+ " (_id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, title TEXT);";
-		db.execSQL(sql);
-	}
-
 	//TextViewに件数（または初期メッセージ）を表示
 	private void showCount(){
 		TextView txt = (TextView)findViewById(R.id.txtCount);
@@ -102,17 +69,8 @@ public class IntentReceiveActivity extends Activity {
     	}
 	}
 	
-	//URLが既にリストにあるかどうかチェックする。あればその位置、なければ-1を返す。
-	private int findUrl(String url){
-		for (int i = adapter.getCount()-1; i >=0 ; i--) {
-			if (adapter.getItem(i).equals(url) ){
-				return i;
-			}
-		}
-		return -1;
-	}
-	
 	private void clearList(){
+		HistoryDb.deleteAll();
 		adapter.clear();
 		showCount();
 	}
