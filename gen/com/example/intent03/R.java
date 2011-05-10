@@ -30,20 +30,23 @@ public final class R {
     public static final class string {
         public static final int app_name=0x7f050001;
         public static final int initial_msg=0x7f050000;
+        public static final int mnu_browser=0x7f050006;
         public static final int mnu_clear=0x7f050004;
+        public static final int mnu_delete=0x7f050007;
         public static final int mnu_exit=0x7f050002;
         public static final int mnu_pref=0x7f050005;
+        public static final int mnu_select=0x7f050012;
         public static final int mnu_send=0x7f050003;
-        public static final int msg_invalid_to_addr=0x7f05000f;
-        public static final int pref_footer=0x7f05000c;
-        public static final int pref_footer_default=0x7f05000e;
-        public static final int pref_footer_summary=0x7f05000d;
-        public static final int pref_prefix=0x7f050009;
-        public static final int pref_prefix_default=0x7f05000b;
-        public static final int pref_prefix_summary=0x7f05000a;
-        public static final int pref_to_addr1=0x7f050006;
-        public static final int pref_to_addr1_default=0x7f050008;
-        public static final int pref_to_addr1_summary=0x7f050007;
+        public static final int msg_invalid_to_addr=0x7f050011;
+        public static final int pref_footer=0x7f05000e;
+        public static final int pref_footer_default=0x7f050010;
+        public static final int pref_footer_summary=0x7f05000f;
+        public static final int pref_prefix=0x7f05000b;
+        public static final int pref_prefix_default=0x7f05000d;
+        public static final int pref_prefix_summary=0x7f05000c;
+        public static final int pref_to_addr1=0x7f050008;
+        public static final int pref_to_addr1_default=0x7f05000a;
+        public static final int pref_to_addr1_summary=0x7f050009;
     }
     public static final class xml {
         public static final int pref=0x7f040000;

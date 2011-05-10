@@ -1,7 +1,6 @@
 package com.example.intent03;
 
 import java.util.ArrayList;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -11,6 +10,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 public class IntentReceiveActivity extends Activity {
 
 	private static ArrayAdapter<String> adapter;			
+	private String selected_url = null;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,7 +35,50 @@ public class IntentReceiveActivity extends Activity {
     	ListView list = (ListView)findViewById(R.id.list);
     	list.setAdapter(adapter);
 
-		HistoryDb.init(getPackageName());
+		//リストの項目がタップされた時に開くダイアログを準備。
+    	String[] str_items = { getString(R.string.mnu_browser) , 
+    							  getString(R.string.mnu_send), 
+    							  getString(R.string.mnu_delete)};
+		final AlertDialog.Builder dialog = new AlertDialog.Builder(this)
+	   		.setIcon(R.drawable.icon)
+	   		.setTitle(getString(R.string.mnu_select))
+	   		.setItems(str_items, 
+	   			new DialogInterface.OnClickListener(){
+	   				//ダイアログの項目が選択された時の処理。
+	   				public void onClick(DialogInterface dialog, int which) {
+	   					switch (which){
+	   					case 0:
+		   					openBrowser(selected_url);
+		   					break;
+	   					case 1:
+	   						startEmailActivity(selected_url);
+	   						break;
+	   					case 2:
+	   						deleteUrl(selected_url);
+	   						break;
+	   					default:
+	   						break;
+	   					}
+	   				}
+	   			}
+	   		);
+    	
+		//リストの項目がタップされた時の処理
+    	list.setOnItemClickListener(
+    		new AdapterView.OnItemClickListener() {
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+					ListView listview = (ListView)parent;
+					selected_url = (String)listview.getItemAtPosition(position);
+					dialog.show();
+				}
+			}
+    	);
+
+    	//データベースを準備
+    	HistoryDb.init(getPackageName());
+    	
+    	//インテントを処理
     	processIntent(getIntent());
     }
 	
@@ -94,6 +139,16 @@ public class IntentReceiveActivity extends Activity {
 		}
 	}
 
+	private void deleteUrl(String selectedUrl) {
+		try {
+			HistoryDb.delete(selectedUrl);
+		} catch (Exception e) {
+			e.printStackTrace();
+	    	showErrorDialog(e);
+		}
+		showList();
+	}
+
 	//データベースから全レコードを削除
 	private void clearList(){
 		try {
@@ -151,6 +206,17 @@ public class IntentReceiveActivity extends Activity {
         startActivity(intent);
 	}
 	
+	//ブラウザを開く。
+	private void openBrowser(String url){
+		Intent intent = new Intent();
+		intent.setAction(Intent.ACTION_VIEW);
+		intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+		intent.addCategory(Intent.CATEGORY_DEFAULT);
+		intent.addCategory(Intent.CATEGORY_BROWSABLE);
+		intent.setData(Uri.parse(url));
+		startActivity(intent);
+    }
+
 	//Eメールを一括送信
 	private void sendEmailAll(){
 		String msg = "";
@@ -197,7 +263,7 @@ public class IntentReceiveActivity extends Activity {
 		}).show();
 	}
 	
-	// Preference設定をチェックする。
+	//設定内容をチェックする。
 	private void ValidateBeforeSend(String to_addr) throws Exception {
 		if (to_addr == null || "".equals(to_addr)){
 			throw new Exception(getString(R.string.msg_invalid_to_addr));
