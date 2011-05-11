@@ -75,11 +75,17 @@ public class IntentReceiveActivity extends Activity {
 			}
     	);
 
-    	//データベースを準備
-    	HistoryDb.init(getPackageName());
-    	
-    	//インテントを処理
-    	processIntent(getIntent());
+    	try {
+        	//データベースを準備
+        	HistoryDb.init(getPackageName());
+			
+        	//インテントを処理
+        	processIntent(getIntent());
+
+    	} catch (Exception e) {
+			e.printStackTrace();
+	    	showErrorDialog(e);
+		}
     }
 	
 	@Override
@@ -92,22 +98,21 @@ public class IntentReceiveActivity extends Activity {
 	private void processIntent(Intent intent) {
     	
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
-    		
     		//URLを取得。
 			String url = intent.getDataString();
 
-			//データベースに保存。
 			try {
+				//データベースに保存。
 				HistoryDb.save(url, "");
 				
+				//標準ブラウザで開く
+				intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+				startActivity(intent);
+
 			} catch (Exception e) {
 				e.printStackTrace();
 		    	showErrorDialog(e);
 			}
-			
-			//標準ブラウザで開く
-			intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-			startActivity(intent);
     	}
 	}
 	
@@ -116,8 +121,7 @@ public class IntentReceiveActivity extends Activity {
 		
 		try {
 			//DBから全件取得。
-			ArrayList<HistoryDb> array;
-			array = HistoryDb.selectAll();
+ 			ArrayList<HistoryDb> array = HistoryDb.selectAll();
 
 			//ListViewに表示。
 			adapter.clear();
@@ -252,6 +256,13 @@ public class IntentReceiveActivity extends Activity {
 	    }
 	}
 	
+	//設定内容をチェックする。
+	private void ValidateBeforeSend(String to_addr) throws Exception {
+		if (to_addr == null || "".equals(to_addr)){
+			throw new Exception(getString(R.string.msg_invalid_to_addr));
+		}
+	}
+
 	//例外の内容をダイアログで表示
 	private void showErrorDialog(Exception e){
     	new AlertDialog.Builder(this)
@@ -262,12 +273,4 @@ public class IntentReceiveActivity extends Activity {
 			}
 		}).show();
 	}
-	
-	//設定内容をチェックする。
-	private void ValidateBeforeSend(String to_addr) throws Exception {
-		if (to_addr == null || "".equals(to_addr)){
-			throw new Exception(getString(R.string.msg_invalid_to_addr));
-		}
-	}
-	
 }

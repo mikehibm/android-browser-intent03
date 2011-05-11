@@ -20,19 +20,27 @@ public class HistoryDb   {
 	public String title = "";
 	
 	
-	public static void init(String pkgName){
+	public static void init(String pkgName) throws Exception{
 		DbPath = "/data/data/" + pkgName + "/" + DBNAME;
+
+		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
+		try {
+			//テーブルが無ければ作成する。
+			createTable(db);
+			
+			Log.d(TBL_HISTORY, TBL_HISTORY + " is ready.");
+		} catch (Exception e) {
+			throw e;
+		} finally{
+			db.close();
+		}
 	}
 
 	public static HistoryDb select(String url) throws Exception{
 		HistoryDb hist = null;
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
-		
 		try {
-			//テーブルが無ければ作成する。
-			createTable(db);
-			
-			//1件を取得する。
+			//urlで検索して合致する1件を取得する。
 			String[] columns = {"_id", "url", "title"};
 			String where = "url = ?";
 			String[] args = { url };
@@ -49,8 +57,6 @@ public class HistoryDb   {
 				
 				Log.d(TBL_HISTORY, "_id=" + hist.id + ", url=" + hist.url + ", title=" + hist.title);
 			}
-			
-			
 		} catch (Exception e) {
 			throw e;
 		} finally{
@@ -64,11 +70,7 @@ public class HistoryDb   {
 		ArrayList<HistoryDb> array = new ArrayList<HistoryDb>();
 		
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
-		
 		try {
-			//テーブルが無ければ作成する。
-			createTable(db);
-			
 			//全件を取得する。
 			String[] columns = {"_id", "url", "title"};
 			String where = null;
@@ -87,8 +89,6 @@ public class HistoryDb   {
 				
 				Log.d(TBL_HISTORY, "_id=" + hist.id + ", url=" + hist.url + ", title=" + hist.title);
 			}
-			
-			
 		} catch (Exception e) {
 			throw e;
 		} finally{
@@ -100,11 +100,7 @@ public class HistoryDb   {
 	
 	public static void save(String url, String title) throws Exception {
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
-		
 		try {
-			//テーブルが無ければ作成する。
-			createTable(db);
-			
 			//同じURLが既にあれば更新する。無ければ挿入する。
 			insertOrUpdateHistory(db, url, title);
 			
@@ -117,11 +113,9 @@ public class HistoryDb   {
 	
 	public static void delete(String url) throws Exception {
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
-		
 		try {
 			String[] args = { url };
 			db.delete(TBL_HISTORY, "url = ?", args);
-			
 		} catch (Exception e) {
 			throw e;
 		} finally{
@@ -131,11 +125,9 @@ public class HistoryDb   {
 
 	public static void deleteAll() throws Exception {
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
-
 		try {
 			String sql = "DELETE FROM " + TBL_HISTORY;
 			db.execSQL(sql);
-			
 		} catch (Exception e) {
 			throw e;
 		} finally{
@@ -144,7 +136,6 @@ public class HistoryDb   {
 	}
 
 	private static void insertOrUpdateHistory(SQLiteDatabase db, String url, String title) {
-		
 		ContentValues values = new ContentValues();
 		values.put("url", url);
 		values.put("title", title);
@@ -170,7 +161,4 @@ public class HistoryDb   {
 		sql = "CREATE INDEX IF NOT EXISTS 'main'.'ix_history_url' ON 'history' ('url' ASC)";
 		db.execSQL(sql);
 	}
-
-
-
 }
