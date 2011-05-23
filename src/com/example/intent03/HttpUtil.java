@@ -11,7 +11,7 @@ import org.apache.http.util.EntityUtils;
 public class HttpUtil {
 	
 	
-	public static String GetHtml(String url){
+	public static String getHtml(String url){
 		String result = null;
 		
 		HttpGet httpGet = new HttpGet(url);
@@ -43,5 +43,11 @@ public class HttpUtil {
 		client.getConnectionManager().shutdown();
 		
 		return result;
+	}
+	
+	public static String getTitle(String url){
+		String html = getHtml(url);
+		String title = "";
+		return title;
 	}
 }

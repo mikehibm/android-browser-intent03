@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -100,10 +101,13 @@ public class IntentReceiveActivity extends Activity {
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
     		//URLを取得。
 			String url = intent.getDataString();
+			
+			String title = HttpUtil.getTitle(url);
+			Log.d("URLHistory", "title=" + title);
 
 			try {
 				//データベースに保存。
-				HistoryDb.save(url, "");
+				HistoryDb.save(url, title);
 				
 				//標準ブラウザで開く
 				intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
