@@ -14,10 +14,12 @@ public class HistoryDb   {
 	
 	public static String DbPath = "";
 	
-	//DBのフィールド
-	public int id = 0;
-	public String url = "";
-	public String title = "";
+	public static class HistoryItem{
+		//DBのフィールド
+		public int id = 0;
+		public String url = "";
+		public String title = "";
+	}
 	
 	public static void init(String pkgName) throws Exception{
 		DbPath = "/data/data/" + pkgName + "/" + DBNAME;
@@ -46,8 +48,8 @@ public class HistoryDb   {
 		db.execSQL(sql);
 	}
 
-	public static HistoryDb select(String url) throws Exception{
-		HistoryDb hist = null;
+	public static HistoryItem select(String url) throws Exception{
+		HistoryItem hist = null;
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
 		try {
 			//urlで検索して合致する1件を取得する。
@@ -60,7 +62,7 @@ public class HistoryDb   {
 			
 			Cursor cursor = db.query(TBL_HISTORY, columns, where, args, group_by, having, order_by);
 			while (cursor.moveToNext()){
-				hist = new HistoryDb();
+				hist = new HistoryItem();
 				hist.id = cursor.getInt(cursor.getColumnIndex("_id"));
 				hist.url = cursor.getString(cursor.getColumnIndex("url"));
 				hist.title = cursor.getString(cursor.getColumnIndex("title"));
@@ -76,8 +78,8 @@ public class HistoryDb   {
 		return hist;
 	}
 	
-	public static ArrayList<HistoryDb> selectAll() throws Exception{
-		ArrayList<HistoryDb> array = new ArrayList<HistoryDb>();
+	public static ArrayList<HistoryItem> selectAll() throws Exception{
+		ArrayList<HistoryItem> array = new ArrayList<HistoryItem>();
 		
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
 		try {
@@ -90,10 +92,11 @@ public class HistoryDb   {
 			
 			Cursor cursor = db.query(TBL_HISTORY, columns, where, null, group_by, having, order_by);
 			while (cursor.moveToNext()){
-				HistoryDb hist = new HistoryDb();
+				HistoryItem hist = new HistoryItem();
 				hist.id = cursor.getInt(cursor.getColumnIndex("_id"));
 				hist.url = cursor.getString(cursor.getColumnIndex("url"));
 				hist.title = cursor.getString(cursor.getColumnIndex("title"));
+				if (hist.title == null) hist.title = "";
 				
 				array.add(hist);
 				

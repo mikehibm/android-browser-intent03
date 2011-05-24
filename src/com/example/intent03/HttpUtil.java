@@ -3,12 +3,16 @@ package com.example.intent03;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+
+import android.util.Log;
 
 public class HttpUtil {
 	
@@ -24,7 +28,18 @@ public class HttpUtil {
 			httpResponse = client.execute(httpGet);
 			HttpEntity entity = httpResponse.getEntity();
 			if (entity != null){
-				result = EntityUtils.toString(entity);
+				Header enc = entity.getContentEncoding();
+				if (enc != null){
+					result = EntityUtils.toString(entity, enc.getName() );
+				} else {
+					result = EntityUtils.toString(entity, "UTF-8" );
+				}
+				
+				if (result.toLowerCase().contains("charset=shift-jis")){
+					result = EntityUtils.toString(entity, "Shift-JIS" );
+				}
+
+				
 				entity.consumeContent();			// entityのリソースを解放
 			}
 
@@ -51,8 +66,6 @@ public class HttpUtil {
 			title = matcher.group(1);
 		}
 		title =  NCR2String(title);
-		
-		if (title == null) title = html;
 		
 		return title;
 	}

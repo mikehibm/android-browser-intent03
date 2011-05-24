@@ -13,15 +13,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 
 public class IntentReceiveActivity extends Activity {
 
-	private static ArrayAdapter<String> adapter;			
-	private String selected_url = null;
+	private static ListItemAdapter adapter;			
+	private HistoryDb.HistoryItem selected_item = null;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -30,11 +29,13 @@ public class IntentReceiveActivity extends Activity {
         setContentView(R.layout.main);
         
         if (adapter == null){
-        	adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        	//adapter = new ArrayAdapter<HistoryDb.HistoryItem>(this, android.R.layout.simple_list_item_1);
+        	ArrayList<HistoryDb.HistoryItem> arraylist = new ArrayList<HistoryDb.HistoryItem>();
+        	adapter = new ListItemAdapter(this, 0, arraylist);
         }
         
-    	ListView list = (ListView)findViewById(R.id.list);
-    	list.setAdapter(adapter);
+    	ListView listview = (ListView)findViewById(R.id.list);
+    	listview.setAdapter(adapter);
 
 		//リストの項目がタップされた時に開くダイアログを準備。
     	String[] str_items = { getString(R.string.mnu_browser) , 
@@ -49,13 +50,14 @@ public class IntentReceiveActivity extends Activity {
 	   				public void onClick(DialogInterface dialog, int which) {
 	   					switch (which){
 	   					case 0:
-		   					openBrowser(selected_url);
+		   					openBrowser(selected_item.url);
 		   					break;
 	   					case 1:
-	   						startEmailActivity(selected_url);
+	   						String msg = selected_item.title + "\n" + selected_item.url;
+	   						startEmailActivity(msg);
 	   						break;
 	   					case 2:
-	   						deleteUrl(selected_url);
+	   						deleteUrl(selected_item.url);
 	   						break;
 	   					default:
 	   						break;
@@ -65,12 +67,12 @@ public class IntentReceiveActivity extends Activity {
 	   		);
     	
 		//リストの項目がタップされた時の処理
-    	list.setOnItemClickListener(
+    	listview.setOnItemClickListener(
     		new AdapterView.OnItemClickListener() {
 				@Override
 				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 					ListView listview = (ListView)parent;
-					selected_url = (String)listview.getItemAtPosition(position);
+					selected_item = (HistoryDb.HistoryItem)listview.getItemAtPosition(position);
 					dialog.show();
 				}
 			}
@@ -126,12 +128,12 @@ public class IntentReceiveActivity extends Activity {
 		
 		try {
 			//DBから全件取得。
- 			ArrayList<HistoryDb> array = HistoryDb.selectAll();
+ 			ArrayList<HistoryDb.HistoryItem> array = HistoryDb.selectAll();
 
 			//ListViewに表示。
 			adapter.clear();
-			for (HistoryDb hist : array) {
-				adapter.add(hist.title + " (" + hist.url + ")");
+			for (HistoryDb.HistoryItem hist : array) {
+				adapter.add(hist);
 			}
 
 			//TextViewに件数（または初期メッセージ）を表示
@@ -229,8 +231,10 @@ public class IntentReceiveActivity extends Activity {
 	//Eメールを一括送信
 	private void sendEmailAll(){
 		String msg = "";
+		HistoryDb.HistoryItem item;
 		for (int i = 0; i < adapter.getCount() ; i++) {
-			msg += adapter.getItem(i) + "\n\n";
+			item = (HistoryDb.HistoryItem)adapter.getItem(i);
+			msg += item.title + "\n" + item.url + "\n\n";
 		}
 		startEmailActivity(msg);
 	}
