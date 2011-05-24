@@ -124,6 +124,14 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 		super.onResume();
 
 		showList();
+
+		if (mProgress != null && !mProgress.isShowing()) {
+			//プログレスダイアログを表示
+			mProgress = new ProgressDialog(this);
+			mProgress.setMessage(getString(R.string.msg_getting_title));
+			mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			mProgress.show();
+		}
 	}
 	
 	private void processIntent(Intent intent) {
