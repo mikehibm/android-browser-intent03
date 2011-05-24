@@ -23,15 +23,14 @@ public class HttpUtil {
 			// レスポンスを取得
 			httpResponse = client.execute(httpGet);
 			HttpEntity entity = httpResponse.getEntity();
-			String response = EntityUtils.toString(entity);
-			entity.consumeContent();			// entityのリソースを解放
-			result = response;
+			if (entity != null){
+				result = EntityUtils.toString(entity);
+				entity.consumeContent();			// entityのリソースを解放
+			}
 
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
