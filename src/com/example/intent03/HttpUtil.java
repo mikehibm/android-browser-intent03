@@ -1,6 +1,8 @@
 package com.example.intent03;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -18,18 +20,12 @@ public class HttpUtil {
 		DefaultHttpClient client = new DefaultHttpClient();
 		HttpResponse httpResponse = null;
 		try {
-			httpResponse = client.execute(httpGet);
-
-			// ステータスコードを取得
-			int statusCode = httpResponse.getStatusLine().getStatusCode();
-			
 			// レスポンスを取得
+			httpResponse = client.execute(httpGet);
 			HttpEntity entity = httpResponse.getEntity();
 			String response = EntityUtils.toString(entity);
-			// リソースを解放
-			entity.consumeContent();
-			
-			result = statusCode + ": " + response;
+			entity.consumeContent();			// entityのリソースを解放
+			result = response;
 
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -45,9 +41,56 @@ public class HttpUtil {
 		return result;
 	}
 	
-	public static String getTitle(String url){
+	public static String getTitle(String url) {
 		String html = getHtml(url);
-		String title = "";
+		String title = null;
+
+		String regexp1 = "<title>(.*)</title>";
+		Pattern pattern = Pattern.compile(regexp1);
+		Matcher matcher = pattern.matcher(html);
+		while (matcher.find()) {
+			title = matcher.group(1);
+		}
+		title =  NCR2String(title);
 		return title;
 	}
+	
+
+	//タイトルに含まれる数値文字参照を変換する。
+	// 例：　「&#65374;」→ 「〜」
+	static String NCR2String(String str) { 
+		String ostr = new String(); 
+		int i1 = 0; 
+		int i2 = 0; 
+
+		while (i2 < str.length()) { 
+			i1 = str.indexOf("&#", i2); 
+			if (i1 == -1) { 
+				ostr += str.substring(i2, str.length()); 
+				break; 
+			} 
+			ostr += str.substring(i2, i1); 
+			i2 = str.indexOf(";", i1); 
+			if (i2 == -1) { 
+				ostr += str.substring(i1, str.length()); 
+				break; 
+			} 
+
+			String tok = str.substring(i1 + 2, i2); 
+			try { 
+				int radix = 10; 
+				if (tok.trim().charAt(0) == 'x') { 
+					radix = 16; 
+					tok = tok.substring(1, tok.length()); 
+				} 
+				ostr += (char) Integer.parseInt(tok, radix); 
+			} 
+			catch (NumberFormatException exp) { 
+				ostr += '?'; 
+			} 
+			i2++; 
+		} 
+		return ostr; 
+	}
+	
 }

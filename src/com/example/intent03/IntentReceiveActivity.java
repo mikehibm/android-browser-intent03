@@ -102,6 +102,11 @@ public class IntentReceiveActivity extends Activity {
     		//URLを取得。
 			String url = intent.getDataString();
 			
+			//標準ブラウザで開く
+			intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+			startActivity(intent);
+
+			//ページのタイトルを取得
 			String title = HttpUtil.getTitle(url);
 			Log.d("URLHistory", "title=" + title);
 
@@ -109,10 +114,6 @@ public class IntentReceiveActivity extends Activity {
 				//データベースに保存。
 				HistoryDb.save(url, title);
 				
-				//標準ブラウザで開く
-				intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-				startActivity(intent);
-
 			} catch (Exception e) {
 				e.printStackTrace();
 		    	showErrorDialog(e);
@@ -130,7 +131,7 @@ public class IntentReceiveActivity extends Activity {
 			//ListViewに表示。
 			adapter.clear();
 			for (HistoryDb hist : array) {
-				adapter.add(hist.url);
+				adapter.add(hist.title + " (" + hist.url + ")");
 			}
 
 			//TextViewに件数（または初期メッセージ）を表示
