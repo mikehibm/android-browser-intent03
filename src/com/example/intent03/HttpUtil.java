@@ -52,6 +52,9 @@ public class HttpUtil {
 			title = matcher.group(1);
 		}
 		title =  NCR2String(title);
+		
+		if (title == null) title = html;
+		
 		return title;
 	}
 	
@@ -59,6 +62,8 @@ public class HttpUtil {
 	//タイトルに含まれる数値文字参照を変換する。
 	// 例：　「&#65374;」→ 「〜」
 	static String NCR2String(String str) { 
+		if (str == null) return str;
+		
 		String ostr = new String(); 
 		int i1 = 0; 
 		int i2 = 0; 
