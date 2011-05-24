@@ -39,8 +39,9 @@ public final class R {
         public static final int mnu_delete=0x7f050007;
         public static final int mnu_exit=0x7f050002;
         public static final int mnu_pref=0x7f050005;
-        public static final int mnu_select=0x7f050012;
+        public static final int mnu_select=0x7f050013;
         public static final int mnu_send=0x7f050003;
+        public static final int msg_getting_title=0x7f050012;
         public static final int msg_invalid_to_addr=0x7f050011;
         public static final int pref_footer=0x7f05000e;
         public static final int pref_footer_default=0x7f050010;

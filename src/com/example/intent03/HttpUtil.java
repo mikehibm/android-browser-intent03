@@ -1,6 +1,7 @@
 package com.example.intent03;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +20,7 @@ public class HttpUtil {
 	
 	public static String getHtml(String url){
 		String result = null;
+		String encoding = "UTF-8";
 		
 		HttpGet httpGet = new HttpGet(url);
 		DefaultHttpClient client = new DefaultHttpClient();
@@ -28,18 +30,9 @@ public class HttpUtil {
 			httpResponse = client.execute(httpGet);
 			HttpEntity entity = httpResponse.getEntity();
 			if (entity != null){
-				Header enc = entity.getContentEncoding();
-				if (enc != null){
-					result = EntityUtils.toString(entity, enc.getName() );
-				} else {
-					result = EntityUtils.toString(entity, "UTF-8" );
-				}
-				
-				if (result.toLowerCase().contains("charset=shift-jis")){
-					result = EntityUtils.toString(entity, "Shift-JIS" );
-				}
-
-				
+				byte[] arr = EntityUtils.toByteArray(entity);
+				encoding = findEncoding(entity, arr);
+				result = new String(arr, encoding);
 				entity.consumeContent();			// entityのリソースを解放
 			}
 
@@ -55,13 +48,54 @@ public class HttpUtil {
 		return result;
 	}
 	
+	private static String findEncoding(HttpEntity entity, byte[] arr){
+		String encoding = "UTF-8";
+		
+		Header enc = entity.getContentEncoding();
+		if (enc != null) encoding = enc.getName();
+		
+		try {
+			String result = new String(arr, encoding);
+
+			String regexp1 = "<meta (.*)";
+			Pattern pattern = Pattern.compile(regexp1);
+			Matcher matcher = pattern.matcher(result);
+			while (matcher.find()) {
+				String metaline = matcher.group(1);
+
+				//<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />		
+				if (metaline.toLowerCase().contains("charset=shift_jis")){
+					encoding = "Shift_JIS";
+					break;
+				}
+
+				//<meta http-equiv="Content-Type" content="text/html; charset=euc-jp" />
+				if (metaline.toLowerCase().contains("charset=euc-jp")){
+					encoding = "euc-jp";
+					break;
+				}
+			}
+
+			
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		return encoding;
+	} 
+	
 	public static String getTitle(String url) {
 		String html = getHtml(url);
+		if (html == null) return null;
+		
+		String html_lower = html.toLowerCase();
+		int p = html_lower.indexOf("</head>");
+		html_lower = html_lower.substring(0, p).replace("\n", "").replace("\r", "");
 		String title = null;
 
 		String regexp1 = "<title>(.*)</title>";
 		Pattern pattern = Pattern.compile(regexp1);
-		Matcher matcher = pattern.matcher(html);
+		Matcher matcher = pattern.matcher(html_lower);
 		while (matcher.find()) {
 			title = matcher.group(1);
 		}

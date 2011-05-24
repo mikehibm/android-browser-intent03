@@ -99,9 +99,8 @@ public class HistoryDb   {
 				if (hist.title == null) hist.title = "";
 				
 				array.add(hist);
-				
-				Log.d(TBL_HISTORY, "_id=" + hist.id + ", url=" + hist.url + ", title=" + hist.title);
 			}
+			cursor.close();
 		} catch (Exception e) {
 			throw e;
 		} finally{
@@ -125,16 +124,25 @@ public class HistoryDb   {
 	}
 	
 	private static void insertOrUpdateHistory(SQLiteDatabase db, String url, String title) {
+		//urlで検索してあれば更新、無ければ挿入する。
+		String[] columns = {"_id", "url", "title"};
+		String where = "url = ?";
+		String[] args = { url };
+		
 		ContentValues values = new ContentValues();
 		values.put("url", url);
 		values.put("title", title);
 
-		String[] args = { url };
+		Cursor cursor = db.query(TBL_HISTORY, columns, where, args, null, null, null);
+		boolean exists = cursor.moveToNext();
+		cursor.close();
 
-		//同じURLが既に保存されていれば更新する。
-		int n = db.update(TBL_HISTORY, values, "url = ?", args );
-		
-		if (n == 0){
+		if (exists){
+			if (title != null && title != ""){
+				//同じURLが既に保存されていれば更新する。
+				db.update(TBL_HISTORY, values, "url = ?", args );
+			}
+		} else {
 			//無ければ挿入する。
 			db.insert(TBL_HISTORY, null, values);
 		}

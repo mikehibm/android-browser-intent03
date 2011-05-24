@@ -3,10 +3,15 @@ package com.example.intent03;
 import java.util.ArrayList;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,10 +22,29 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 
-public class IntentReceiveActivity extends Activity {
+public class IntentReceiveActivity extends Activity implements Runnable {
 
 	private static ListItemAdapter adapter;			
 	private HistoryDb.HistoryItem selected_item = null;
+	private ProgressDialog mProgress;
+	
+	private Handler mHandler = new Handler(){
+		public void handleMessage(Message msg){
+			mProgress.dismiss();
+
+			Bundle bundle = msg.getData();
+			String url = bundle.getString("url");
+			String title = bundle.getString("title");
+
+			//データベースに保存。
+			try {
+				HistoryDb.save(url, title);
+				showList();
+			} catch (Exception e) {
+		    	showErrorDialog(e);
+			}
+		}
+	};
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,7 +110,6 @@ public class IntentReceiveActivity extends Activity {
         	processIntent(getIntent());
 
     	} catch (Exception e) {
-			e.printStackTrace();
 	    	showErrorDialog(e);
 		}
     }
@@ -101,26 +124,46 @@ public class IntentReceiveActivity extends Activity {
 	private void processIntent(Intent intent) {
     	
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
-    		//URLを取得。
-			String url = intent.getDataString();
-			
-			//標準ブラウザで開く
-			intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-			startActivity(intent);
-
-			//ページのタイトルを取得
-			String title = HttpUtil.getTitle(url);
-			Log.d("URLHistory", "title=" + title);
-
 			try {
-				//データベースに保存。
-				HistoryDb.save(url, title);
+				if (isConnected()){
+					//標準ブラウザで開く
+					intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+					startActivity(intent);
+
+					//別スレッドでタイトルを取得
+					startGettingTitle();
+				}
 				
 			} catch (Exception e) {
-				e.printStackTrace();
 		    	showErrorDialog(e);
 			}
     	}
+	}
+	
+	private void startGettingTitle() {
+		//プログレスダイアログを表示
+		mProgress = new ProgressDialog(this);
+		mProgress.setMessage(getString(R.string.msg_getting_title));
+		mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		mProgress.show();
+		
+		//別スレッドでタイトルの取得処理を開始。
+		Thread thread = new Thread(this);
+		thread.start();
+	}
+
+	private boolean isConnected(){
+		ConnectivityManager cm = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+		NetworkInfo info = cm.getActiveNetworkInfo();
+		if (info == null){
+			return false;
+		} else {
+			if (info.isConnected()){
+				return true;
+			} else {
+				return false;
+			}
+		}
 	}
 	
 	//データベースから全件取得してListViewに表示する。
@@ -281,5 +324,21 @@ public class IntentReceiveActivity extends Activity {
 				dialog.dismiss();
 			}
 		}).show();
+	}
+
+	@Override
+	public void run() {
+		Intent intent = getIntent();
+		String url = intent.getDataString();
+
+		//ページのタイトルを取得
+		String title = HttpUtil.getTitle(url);
+		
+		Message msg = new Message();
+		Bundle bundle = new Bundle();
+		bundle.putString("url", url);
+		bundle.putString("title", title);
+		msg.setData(bundle);
+		mHandler.sendMessage(msg);
 	}
 }

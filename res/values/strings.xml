@@ -26,5 +26,7 @@
 	<string name="pref_footer_default">---\nSent by URL History.</string>
     
 	<string name="msg_invalid_to_addr">宛先のEmailアドレスが空白かまたは正しくありません。\n設定を開いてEmailアドレスを入力して下さい。\n(例： youremail@gmail.com)</string>
+	<string name="msg_getting_title">タイトルを取得しています...</string>
 	<string name="mnu_select">選択して下さい</string>
+	
 </resources>
