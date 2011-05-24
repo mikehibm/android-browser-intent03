@@ -30,7 +30,7 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	
 	private Handler mHandler = new Handler(){
 		public void handleMessage(Message msg){
-			if (mProgress != null) mProgress.dismiss();
+			if (mProgress != null && mProgress.isShowing()) mProgress.dismiss();
 
 			Bundle bundle = msg.getData();
 			String url = bundle.getString("url");
@@ -114,6 +114,12 @@ public class IntentReceiveActivity extends Activity implements Runnable {
     }
 	
 	@Override
+	protected void onPause() {
+		super.onPause();
+		if (mProgress != null && mProgress.isShowing()) mProgress.dismiss();
+	}
+	
+	@Override
 	protected void onResume() {
 		super.onResume();
 
@@ -126,22 +132,26 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 			try {
 				if (isConnected()){
 					Log.d("inten04", "describeContents=" + intent.describeContents());
-					Log.d("inten04", "Type=" + intent.getType());
-					if (intent.getCategories() != null){
-						Log.d("inten04", "Categories().size=" + intent.getCategories().size());
-					} else {
-						Log.d("inten04", "Categories()=null");
-					}
-					Log.d("inten04", "toUri(0)=" + intent.toUri(0));
-					Log.d("inten04", "Flags=" + intent.getFlags());
+//					Log.d("inten04", "Type=" + intent.getType());
+//					if (intent.getCategories() != null){
+//						Log.d("inten04", "Categories().size=" + intent.getCategories().size());
+//					} else {
+//						Log.d("inten04", "Categories()=null");
+//					}
+//					Log.d("inten04", "toUri(0)=" + intent.toUri(0));
+//					Log.d("inten04", "Flags=" + intent.getFlags());
 					
 					//標準ブラウザで開く
 					intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
 					startActivity(intent);
 
+					Log.d("inten04", "startActivity done");
+
 					//データベースに保存。
 					String url = intent.getDataString();
 					HistoryDb.save(url, null);
+
+					Log.d("inten04", "SaveDB done");
 
 					//別スレッドでタイトルを取得
 					startGettingTitle();
@@ -154,6 +164,8 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	}
 	
 	private void startGettingTitle() {
+		if (mProgress != null && mProgress.isShowing()) mProgress.dismiss();
+		
 		//プログレスダイアログを表示
 		mProgress = new ProgressDialog(this);
 		mProgress.setMessage(getString(R.string.msg_getting_title));
@@ -163,6 +175,22 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 		//別スレッドでタイトルの取得処理を開始。
 		Thread thread = new Thread(this);
 		thread.start();
+	}
+
+	@Override
+	public void run() {
+		Intent intent = getIntent();
+		String url = intent.getDataString();
+
+		//ページのタイトルを取得
+		String title = HttpUtil.getTitle(url);
+		
+		Message msg = new Message();
+		Bundle bundle = new Bundle();
+		bundle.putString("url", url);
+		bundle.putString("title", title);
+		msg.setData(bundle);
+		mHandler.sendMessage(msg);
 	}
 
 	private boolean isConnected(){
@@ -339,19 +367,4 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 		}).show();
 	}
 
-	@Override
-	public void run() {
-		Intent intent = getIntent();
-		String url = intent.getDataString();
-
-		//ページのタイトルを取得
-		String title = HttpUtil.getTitle(url);
-		
-		Message msg = new Message();
-		Bundle bundle = new Bundle();
-		bundle.putString("url", url);
-		bundle.putString("title", title);
-		msg.setData(bundle);
-		mHandler.sendMessage(msg);
-	}
 }
