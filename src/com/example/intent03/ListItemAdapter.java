@@ -3,10 +3,13 @@ package com.example.intent03;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 
@@ -24,12 +27,23 @@ public class ListItemAdapter extends ArrayAdapter<HistoryDb.HistoryItem> {
 		
 		View view = mInflater.inflate(R.layout.list_item, null);
 		
-		TextView title = (TextView)view.findViewById(R.id.txtListTitle);
-		title.setText(item.title);
-		
 		TextView url = (TextView)view.findViewById(R.id.txtListUrl);
 		url.setText(item.url);
+
+		FrameLayout framelayout = (FrameLayout)view.findViewById(R.id.frmLayout);
 		
+		TextView title = (TextView)framelayout.findViewById(R.id.txtListTitle);
+		title.setText(item.title);
+
+		ProgressBar prgBar = (ProgressBar)framelayout.findViewById(R.id.prgBar);
+		if ("".equals(item.title)){
+//			url.setBackgroundColor(Color.CYAN);
+			prgBar.setVisibility(View.VISIBLE);
+		} else {
+//			url.setBackgroundColor(Color.TRANSPARENT);
+			prgBar.setVisibility(View.INVISIBLE);
+		}
+
 		return view;
 	}
 }

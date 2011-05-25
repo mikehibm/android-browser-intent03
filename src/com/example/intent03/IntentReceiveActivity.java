@@ -6,9 +6,11 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,23 +30,7 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	private HistoryDb.HistoryItem selected_item = null;
 	private ProgressDialog mProgress;
 	
-	private Handler mHandler = new Handler(){
-		public void handleMessage(Message msg){
-			if (mProgress != null && mProgress.isShowing()) mProgress.dismiss();
-
-			Bundle bundle = msg.getData();
-			String url = bundle.getString("url");
-			String title = bundle.getString("title");
-
-			//データベースに保存。
-			try {
-				HistoryDb.save(url, title);
-				showList();
-			} catch (Exception e) {
-		    	showErrorDialog(e);
-			}
-		}
-	};
+	private Handler mHandler = new Handler();
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,7 +102,23 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mProgress != null && mProgress.isShowing()) mProgress.dismiss();
+		hideProgress();
+	}
+	
+	private void showProgress(){
+		hideProgress();
+		
+		//プログレスダイアログを表示
+		mProgress = new ProgressDialog(this);
+		mProgress.setMessage(getString(R.string.msg_getting_title));
+		mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		mProgress.show();
+	}
+	
+	private void hideProgress(){
+		if (mProgress == null) return;
+		mProgress.dismiss();
+		mProgress = null;
 	}
 	
 	@Override
@@ -125,12 +127,8 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 
 		showList();
 
-		if (mProgress != null && !mProgress.isShowing()) {
-			//プログレスダイアログを表示
-			mProgress = new ProgressDialog(this);
-			mProgress.setMessage(getString(R.string.msg_getting_title));
-			mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			mProgress.show();
+		if (mProgress != null) {
+			showProgress();
 		}
 	}
 	
@@ -172,13 +170,8 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	}
 	
 	private void startGettingTitle() {
-		if (mProgress != null && mProgress.isShowing()) mProgress.dismiss();
-		
 		//プログレスダイアログを表示
-		mProgress = new ProgressDialog(this);
-		mProgress.setMessage(getString(R.string.msg_getting_title));
-		mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgress.show();
+		showProgress();
 		
 		//別スレッドでタイトルの取得処理を開始。
 		Thread thread = new Thread(this);
@@ -188,17 +181,27 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	@Override
 	public void run() {
 		Intent intent = getIntent();
-		String url = intent.getDataString();
+		final String url = intent.getDataString();
 
-		//ページのタイトルを取得
-		String title = HttpUtil.getTitle(url);
+		//HTTP通信を実行してページのタイトルを取得
+		final String title = HttpUtil.getTitle(url);
 		
-		Message msg = new Message();
-		Bundle bundle = new Bundle();
-		bundle.putString("url", url);
-		bundle.putString("title", title);
-		msg.setData(bundle);
-		mHandler.sendMessage(msg);
+		mHandler.post(new Runnable(){
+			@Override
+			public void run(){
+				hideProgress();
+
+				try {
+					//画面を更新(該当のurlが既にリストから削除されていた場合はfalseを返す)
+					if (updateList(url, title)){
+						//データベースに保存。
+						HistoryDb.save(url, title);
+					}
+				} catch (Exception e) {
+			    	showErrorDialog(e);
+				}
+			}
+		});
 	}
 
 	private boolean isConnected(){
@@ -240,6 +243,35 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 			e.printStackTrace();
 	    	showErrorDialog(e);
 		}
+	}
+	
+	private boolean updateList(String url, String title){
+		ListView listview = (ListView)findViewById(R.id.list);
+		for (int i = 0; i < listview.getCount(); i++){
+			HistoryDb.HistoryItem item = (HistoryDb.HistoryItem)listview.getItemAtPosition(i);
+			if (item.url.equals(url)){
+				item.title = title;
+				adapter.notifyDataSetChanged();
+
+//				View vw = listview.getChildAt(i);
+//				TextView txtListTitle = (TextView)vw.findViewById(R.id.txtListTitle);
+//				txtListTitle.setBackgroundColor(Color.argb(128, 0, 0, 255));
+//				TextView txtListUrl = (TextView)vw.findViewById(R.id.txtListUrl);
+//				txtListUrl.setVisibility(View.INVISIBLE);
+				
+				return true;
+			}
+		}
+		
+//		for (int i = 0; i < adapter.getCount(); i++) {
+//			HistoryDb.HistoryItem item = adapter.getItem(i);
+//			if (item.url.equals(url)){
+//				item.title = title;
+//				adapter.notifyDataSetChanged();
+//				return true;
+//			}
+//		}
+		return false;
 	}
 
 	private void deleteUrl(String selectedUrl) {

@@ -9,9 +9,12 @@ import java.util.regex.Pattern;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.mozilla.universalchardet.UniversalDetector;
 
@@ -19,34 +22,43 @@ import android.util.Log;
 
 public class HttpUtil {
 	
-	
 	public static String getHtml(String url){
 		String result = null;
 		String encoding = "UTF-8";
 		
 		HttpGet httpGet = new HttpGet(url);
 		DefaultHttpClient client = new DefaultHttpClient();
-		HttpResponse httpResponse = null;
+		HttpParams httpParams = client.getParams();
+		
+		//接続のタイムアウト（単位：ms）
+	    HttpConnectionParams.setConnectionTimeout(httpParams, 1000 * 10);
+	    //データ取得のタイムアウト（単位：ms）
+	    HttpConnectionParams.setSoTimeout(httpParams, 1000 * 30);   		
+	    
 		try {
 			// レスポンスを取得
-			httpResponse = client.execute(httpGet);
-			HttpEntity entity = httpResponse.getEntity();
-			if (entity != null){
-				byte[] arr = EntityUtils.toByteArray(entity);
-				encoding = detectEncoding(arr);
-				if (encoding == null) encoding = findEncoding(entity, arr);
-				result = new String(arr, encoding);
-				entity.consumeContent();			// entityのリソースを解放
-			}
+			HttpResponse httpResponse = client.execute(httpGet);
+			int status = httpResponse.getStatusLine().getStatusCode();
 
+			if (HttpStatus.SC_OK == status){
+				HttpEntity entity = httpResponse.getEntity();
+				if (entity != null){
+					byte[] arr = EntityUtils.toByteArray(entity);
+					encoding = detectEncoding(arr);
+					if (encoding == null) encoding = findEncoding(entity, arr);
+					result = new String(arr, encoding);
+					entity.consumeContent();			// entityのリソースを解放
+				}
+			}
+		
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			// クライアントを終了させる
+			client.getConnectionManager().shutdown();
 		}
-		
-		// クライアントを終了させる
-		client.getConnectionManager().shutdown();
 		
 		return result;
 	}
@@ -100,30 +112,38 @@ public class HttpUtil {
     	   e.printStackTrace();
         }
        detector.dataEnd();
-
-		String encoding = detector.getDetectedCharset();
-		return encoding;
+		return detector.getDetectedCharset();
 	}
 	
 	public static String getTitle(String url) {
+		String title = null;
 		String html = getHtml(url);
 		if (html == null) return null;
 		
 		String html_lower = html.toLowerCase();
-		int p = html_lower.indexOf("</head>");
-		if (p > 0) html_lower = html_lower.substring(0, p);
-		
-		html_lower = html_lower.replace("\n", "").replace("\r", "");
-		String title = null;
 
-		String regexp1 = ".*<title.*>(.*)</title>";
-		Pattern pattern = Pattern.compile(regexp1);
-		Matcher matcher = pattern.matcher(html_lower);
-		while (matcher.find()) {
-			title = matcher.group(1);
-		}
-		title =  NCR2String(title);
-		
+		int startIndex = -1, p = 0;
+		int endIndex = html_lower.indexOf("</title>");
+		if (endIndex >= 0){ 
+			html_lower = html_lower.substring(0, endIndex);
+
+			p = html_lower.indexOf("<title>");
+			if (p >= 0){
+				startIndex = p+7;
+			} else {
+				p = html_lower.indexOf("<title ");
+				if (p > 0) {
+					p = html_lower.indexOf(">", p+7);
+					if (p > 0) startIndex = p+1;
+				}
+			}
+			if (startIndex >=0 && endIndex >= 0){
+				title = html.substring(startIndex, endIndex)
+							.replace("\n", "").replace("\r", "")
+							.trim();
+				title =  NCR2String(title);
+			}
+		} 
 		return title;
 	}
 	
