@@ -11,6 +11,7 @@ public class Pref  extends PreferenceActivity{
 	private static final String KEY_TO_ADDR1 = "to_addr1";
 	private static final String KEY_PREFIX = "prefix";
 	private static final String KEY_FOOTER = "footer";
+	private static final String KEY_OPEN_BROWSER = "open_browser";
 	
 	private SharedPreferences mSharedPreferences = null;
 	
@@ -41,6 +42,11 @@ public class Pref  extends PreferenceActivity{
     public static String getFooter(Context con){  
     	String value = PreferenceManager.getDefaultSharedPreferences(con).getString(KEY_FOOTER, con.getString(R.string.pref_footer_default));
     	if (value == null) value = "";
+    	return value;
+    }
+    
+    public static boolean getOpenBrowser(Context con){  
+    	boolean value = PreferenceManager.getDefaultSharedPreferences(con).getBoolean(KEY_OPEN_BROWSER, true);
     	return value;
     }
     

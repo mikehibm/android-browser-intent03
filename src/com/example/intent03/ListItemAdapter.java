@@ -31,16 +31,15 @@ public class ListItemAdapter extends ArrayAdapter<HistoryDb.HistoryItem> {
 		url.setText(item.url);
 
 		FrameLayout framelayout = (FrameLayout)view.findViewById(R.id.frmLayout);
-		
 		TextView title = (TextView)framelayout.findViewById(R.id.txtListTitle);
-		title.setText(item.title);
-
 		ProgressBar prgBar = (ProgressBar)framelayout.findViewById(R.id.prgBar);
+		
 		if ("".equals(item.title)){
-//			url.setBackgroundColor(Color.CYAN);
+			title.setText(getContext().getString(R.string.msg_initial_title));
+    		title.setPadding(30, 0, 0, 0);
 			prgBar.setVisibility(View.VISIBLE);
 		} else {
-//			url.setBackgroundColor(Color.TRANSPARENT);
+			title.setText(item.title);
 			prgBar.setVisibility(View.INVISIBLE);
 		}
 

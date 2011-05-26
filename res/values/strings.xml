@@ -13,6 +13,7 @@
 	<string name="mnu_browser">ブラウザで開く</string>
 	<string name="mnu_delete">削除</string>
     
+	<string name="pref_cat_email">メール設定</string>
     <string name="pref_to_addr1">宛先</string>
 	<string name="pref_to_addr1_summary">宛先のEmailアドレス。カンマ(,)で区切って複数登録も可能。</string>
 	<string name="pref_to_addr1_default"></string>
@@ -24,9 +25,15 @@
 	<string name="pref_footer">メール本文の末尾</string>
 	<string name="pref_footer_summary"></string>
 	<string name="pref_footer_default">---\nSent by URL History.</string>
+
+	<string name="pref_cat_browser">ブラウザ設定</string>
+	<string name="pref_open_browser">自動的にブラウザを開く</string>
     
 	<string name="msg_invalid_to_addr">宛先のEmailアドレスが空白かまたは正しくありません。\n設定を開いてEmailアドレスを入力して下さい。\n(例： youremail@gmail.com)</string>
 	<string name="msg_getting_title">タイトルを取得しています...</string>
-	<string name="mnu_select">選択して下さい</string>
+	<string name="msg_no_title">(無題)</string>
+	<string name="msg_initial_title">タイトルを取得中...</string>
+	
+	<string name="msg_select">選択して下さい</string>
 	
 </resources>

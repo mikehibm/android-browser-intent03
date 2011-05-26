@@ -3,17 +3,13 @@ package com.example.intent03;
 import java.util.ArrayList;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,7 +24,6 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 
 	private static ListItemAdapter adapter;			
 	private HistoryDb.HistoryItem selected_item = null;
-	private ProgressDialog mProgress;
 	
 	private Handler mHandler = new Handler();
 	
@@ -52,7 +47,7 @@ public class IntentReceiveActivity extends Activity implements Runnable {
     							  getString(R.string.mnu_delete)};
 		final AlertDialog.Builder dialog = new AlertDialog.Builder(this)
 	   		.setIcon(R.drawable.icon)
-	   		.setTitle(getString(R.string.mnu_select))
+	   		.setTitle(getString(R.string.msg_select))
 	   		.setItems(str_items, 
 	   			new DialogInterface.OnClickListener(){
 	   				//ダイアログの項目が選択された時の処理。
@@ -100,36 +95,10 @@ public class IntentReceiveActivity extends Activity implements Runnable {
     }
 	
 	@Override
-	protected void onPause() {
-		super.onPause();
-		hideProgress();
-	}
-	
-	private void showProgress(){
-		hideProgress();
-		
-		//プログレスダイアログを表示
-		mProgress = new ProgressDialog(this);
-		mProgress.setMessage(getString(R.string.msg_getting_title));
-		mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgress.show();
-	}
-	
-	private void hideProgress(){
-		if (mProgress == null) return;
-		mProgress.dismiss();
-		mProgress = null;
-	}
-	
-	@Override
 	protected void onResume() {
 		super.onResume();
 
 		showList();
-
-		if (mProgress != null) {
-			showProgress();
-		}
 	}
 	
 	private void processIntent(Intent intent) {
@@ -146,21 +115,20 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 //					}
 //					Log.d("inten04", "toUri(0)=" + intent.toUri(0));
 //					Log.d("inten04", "Flags=" + intent.getFlags());
-					
-					//標準ブラウザで開く
-					intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-					startActivity(intent);
 
-					Log.d("inten04", "startActivity done");
+					if (Pref.getOpenBrowser(this)){
+						//標準ブラウザで開く
+						intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+						startActivity(intent);
+					}
 
 					//データベースに保存。
 					String url = intent.getDataString();
 					HistoryDb.save(url, null);
 
-					Log.d("inten04", "SaveDB done");
-
-					//別スレッドでタイトルを取得
-					startGettingTitle();
+					//別スレッドでタイトルの取得処理を開始。
+					Thread thread = new Thread(this);
+					thread.start();
 				}
 				
 			} catch (Exception e) {
@@ -169,32 +137,23 @@ public class IntentReceiveActivity extends Activity implements Runnable {
     	}
 	}
 	
-	private void startGettingTitle() {
-		//プログレスダイアログを表示
-		showProgress();
-		
-		//別スレッドでタイトルの取得処理を開始。
-		Thread thread = new Thread(this);
-		thread.start();
-	}
-
+	//別スレッドで処理する
 	@Override
 	public void run() {
 		Intent intent = getIntent();
 		final String url = intent.getDataString();
 
 		//HTTP通信を実行してページのタイトルを取得
-		final String title = HttpUtil.getTitle(url);
-		
+		final String title = HttpUtil.getTitle(url, getString(R.string.msg_no_title));
+
+		//処理完了後、ハンドラにUIスレッド側で実行する処理を渡す。
 		mHandler.post(new Runnable(){
 			@Override
 			public void run(){
-				hideProgress();
-
 				try {
-					//画面を更新(該当のurlが既にリストから削除されていた場合はfalseを返す)
+					//ListViewを更新(該当のurlが既にListViewから削除されていた場合はfalseを返す)
 					if (updateList(url, title)){
-						//データベースに保存。
+						//削除されていなければデータベースを更新。
 						HistoryDb.save(url, title);
 					}
 				} catch (Exception e) {
@@ -204,6 +163,7 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 		});
 	}
 
+	//ネットワークに接続されているかチェックする。
 	private boolean isConnected(){
 		ConnectivityManager cm = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo info = cm.getActiveNetworkInfo();
@@ -226,10 +186,12 @@ public class IntentReceiveActivity extends Activity implements Runnable {
  			ArrayList<HistoryDb.HistoryItem> array = HistoryDb.selectAll();
 
 			//ListViewに表示。
+			adapter.setNotifyOnChange(false);				//adapterと画面の連動を一旦中断(速度を上げる為)
 			adapter.clear();
 			for (HistoryDb.HistoryItem hist : array) {
 				adapter.add(hist);
 			}
+			adapter.notifyDataSetChanged();					//adapterと画面の連動を再開
 
 			//TextViewに件数（または初期メッセージ）を表示
 			TextView txt = (TextView)findViewById(R.id.txtCount);
@@ -240,37 +202,20 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	    	}
 		
 		} catch (Exception e) {
-			e.printStackTrace();
 	    	showErrorDialog(e);
 		}
 	}
 	
+	//ListViewのタイトルを更新する。
 	private boolean updateList(String url, String title){
-		ListView listview = (ListView)findViewById(R.id.list);
-		for (int i = 0; i < listview.getCount(); i++){
-			HistoryDb.HistoryItem item = (HistoryDb.HistoryItem)listview.getItemAtPosition(i);
-			if (item.url.equals(url)){
+		for (int i = 0; i < adapter.getCount(); i++) {
+			HistoryDb.HistoryItem item = adapter.getItem(i);
+			if (url.equals(item.url)){
 				item.title = title;
 				adapter.notifyDataSetChanged();
-
-//				View vw = listview.getChildAt(i);
-//				TextView txtListTitle = (TextView)vw.findViewById(R.id.txtListTitle);
-//				txtListTitle.setBackgroundColor(Color.argb(128, 0, 0, 255));
-//				TextView txtListUrl = (TextView)vw.findViewById(R.id.txtListUrl);
-//				txtListUrl.setVisibility(View.INVISIBLE);
-				
 				return true;
 			}
 		}
-		
-//		for (int i = 0; i < adapter.getCount(); i++) {
-//			HistoryDb.HistoryItem item = adapter.getItem(i);
-//			if (item.url.equals(url)){
-//				item.title = title;
-//				adapter.notifyDataSetChanged();
-//				return true;
-//			}
-//		}
 		return false;
 	}
 

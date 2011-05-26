@@ -30,10 +30,9 @@ public class HttpUtil {
 		DefaultHttpClient client = new DefaultHttpClient();
 		HttpParams httpParams = client.getParams();
 		
-		//接続のタイムアウト（単位：ms）
-	    HttpConnectionParams.setConnectionTimeout(httpParams, 1000 * 10);
-	    //データ取得のタイムアウト（単位：ms）
-	    HttpConnectionParams.setSoTimeout(httpParams, 1000 * 30);   		
+	    HttpConnectionParams.setConnectionTimeout(httpParams, 1000 * 10);		//接続のタイムアウト（単位：ms）
+	    HttpConnectionParams.setSoTimeout(httpParams, 1000 * 30);				//データ取得のタイムアウト（単位：ms）   		
+		client.setParams(httpParams);
 	    
 		try {
 			// レスポンスを取得
@@ -115,10 +114,10 @@ public class HttpUtil {
 		return detector.getDetectedCharset();
 	}
 	
-	public static String getTitle(String url) {
-		String title = null;
+	public static String getTitle(String url, String msg_no_title) {
+		String title = msg_no_title;
 		String html = getHtml(url);
-		if (html == null) return null;
+		if (html == null) return title;
 		
 		String html_lower = html.toLowerCase();
 
