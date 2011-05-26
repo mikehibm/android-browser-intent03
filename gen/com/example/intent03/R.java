@@ -43,10 +43,11 @@ public final class R {
         public static final int mnu_pref=0x7f050005;
         public static final int mnu_send=0x7f050003;
         public static final int msg_getting_title=0x7f050015;
-        public static final int msg_initial_title=0x7f050017;
+        public static final int msg_initial_title=0x7f050018;
         public static final int msg_invalid_to_addr=0x7f050014;
         public static final int msg_no_title=0x7f050016;
-        public static final int msg_select=0x7f050018;
+        public static final int msg_offline_title=0x7f050017;
+        public static final int msg_select=0x7f050019;
         public static final int pref_cat_browser=0x7f050012;
         public static final int pref_cat_email=0x7f050008;
         public static final int pref_footer=0x7f05000f;

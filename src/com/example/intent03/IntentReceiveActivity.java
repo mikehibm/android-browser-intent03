@@ -104,33 +104,34 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	private void processIntent(Intent intent) {
     	
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
-			try {
-				if (isConnected()){
-					Log.d("inten04", "describeContents=" + intent.describeContents());
-//					Log.d("inten04", "Type=" + intent.getType());
-//					if (intent.getCategories() != null){
-//						Log.d("inten04", "Categories().size=" + intent.getCategories().size());
-//					} else {
-//						Log.d("inten04", "Categories()=null");
-//					}
-//					Log.d("inten04", "toUri(0)=" + intent.toUri(0));
-//					Log.d("inten04", "Flags=" + intent.getFlags());
+			Log.d("inten04", "describeContents=" + intent.describeContents());
+//			Log.d("inten04", "Type=" + intent.getType());
+//			if (intent.getCategories() != null){
+//				Log.d("inten04", "Categories().size=" + intent.getCategories().size());
+//			} else {
+//				Log.d("inten04", "Categories()=null");
+//			}
+//			Log.d("inten04", "toUri(0)=" + intent.toUri(0));
+//			Log.d("inten04", "Flags=" + intent.getFlags());
 
-					if (Pref.getOpenBrowser(this)){
-						//標準ブラウザで開く
-						intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-						startActivity(intent);
-					}
+			try {
+				String url = intent.getDataString();
+
+				if (isConnected() && Pref.getOpenBrowser(this)){
+					//ブラウザで開く
+					intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+					startActivity(intent);
 
 					//データベースに保存。
-					String url = intent.getDataString();
 					HistoryDb.save(url, null);
 
 					//別スレッドでタイトルの取得処理を開始。
-					Thread thread = new Thread(this);
-					thread.start();
+					new Thread(this).start();
+					
+				} else {
+					//データベースに保存。(オフライン時)
+					HistoryDb.save(url, url);
 				}
-				
 			} catch (Exception e) {
 		    	showErrorDialog(e);
 			}

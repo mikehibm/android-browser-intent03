@@ -32,6 +32,7 @@
 	<string name="msg_invalid_to_addr">宛先のEmailアドレスが空白かまたは正しくありません。\n設定を開いてEmailアドレスを入力して下さい。\n(例： youremail@gmail.com)</string>
 	<string name="msg_getting_title">タイトルを取得しています...</string>
 	<string name="msg_no_title">(無題)</string>
+	<string name="msg_offline_title">(オフライン)</string>
 	<string name="msg_initial_title">タイトルを取得中...</string>
 	
 	<string name="msg_select">選択して下さい</string>
