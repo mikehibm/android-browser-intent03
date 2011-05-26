@@ -31,7 +31,7 @@ public class HttpUtil {
 		HttpParams httpParams = client.getParams();
 		
 	    HttpConnectionParams.setConnectionTimeout(httpParams, 1000 * 10);		//接続のタイムアウト（単位：ms）
-	    HttpConnectionParams.setSoTimeout(httpParams, 1000 * 30);				//データ取得のタイムアウト（単位：ms）   		
+	    HttpConnectionParams.setSoTimeout(httpParams, 1000 * 60);				//データ取得のタイムアウト（単位：ms）   		
 		client.setParams(httpParams);
 	    
 		try {

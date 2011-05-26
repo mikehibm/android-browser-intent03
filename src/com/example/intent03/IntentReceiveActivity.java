@@ -117,10 +117,12 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 			try {
 				String url = intent.getDataString();
 
-				if (isConnected() && Pref.getOpenBrowser(this)){
-					//ブラウザで開く
-					intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-					startActivity(intent);
+				if (isConnected()){
+					if (Pref.getOpenBrowser(this)){
+						//ブラウザで開く
+						intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+						startActivity(intent);
+					}
 
 					//データベースに保存。
 					HistoryDb.save(url, null);
@@ -129,7 +131,7 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 					new Thread(this).start();
 					
 				} else {
-					//データベースに保存。(オフライン時)
+					//データベースに保存。(オフライン時はURLをタイトルにする)
 					HistoryDb.save(url, url);
 				}
 			} catch (Exception e) {
