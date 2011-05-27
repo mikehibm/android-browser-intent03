@@ -21,6 +21,58 @@ import android.util.Log;
 
 public class HttpUtil {
 	
+	private static final String TAG = "intent04.HttpUtil";
+	
+	
+	/***
+	 * 指定されたURLにHTTP GETリクエストを行ない、結果のHTMLからタイトルを抽出する。
+	 * タイトルに含まれる数値文字参照、実体参照は変換してから返す。
+	 * 
+	 * @param url
+	 * @param msg_no_title タイトルが見つからない(もしくはエラーになった)場合に返す文字列
+	 * @return ページタイトル
+	 */
+	public static String getTitle(String url, String msg_no_title) {
+		String title = msg_no_title;
+		String html = getHtml(url);
+		if (html == null) return title;
+		
+		String html_lower = html.toLowerCase();
+
+		int startIndex = -1, p = 0;
+		int endIndex = html_lower.indexOf("</title>");				//まず終了タグを探す。
+		if (endIndex >= 0){ 
+			html_lower = html_lower.substring(0, endIndex);
+
+			p = html_lower.indexOf("<title>");						//開始タグを探す。
+			if (p >= 0){
+				startIndex = p+7;
+			} else {
+				p = html_lower.indexOf("<title ");					//開始タグにidなどの属性が付いている場合があるのでその対応。
+				if (p > 0) {
+					p = html_lower.indexOf(">", p+7);
+					if (p > 0) startIndex = p+1;
+				}
+			}
+			if (startIndex >=0 && endIndex >= 0){
+				//見つかった始点から終点までを抜き出す。同時に改行と空白を除去する。
+				title = html.substring(startIndex, endIndex)
+							.replace("\n", "").replace("\r", "")
+							.trim();
+				
+				title = NCR2String(title);				//数値文字参照を変換
+				title = convertRefString(title);		//実体参照を変換
+			}
+		} 
+		return title;
+	}
+	
+	/***
+	 * 指定されたURLにHTTP GETリクエストを行ない結果を取得する。
+	 * 
+	 * @param url
+	 * @return HTML文字列
+	 */
 	public static String getHtml(String url){
 		String result = null;
 		String encoding = "UTF-8";
@@ -56,9 +108,9 @@ public class HttpUtil {
 			}
 		
 		} catch (ClientProtocolException e) {
-			Log.d("intent04", e.getMessage());
+			Log.d(TAG, e.getMessage());
 		} catch (IOException e) {
-			Log.d("intent04", e.getMessage());
+			Log.d(TAG, e.getMessage());
 		} finally {
 			//HTTPクライアントを終了させる
 			client.getConnectionManager().shutdown();
@@ -96,7 +148,7 @@ public class HttpUtil {
 					}
 				}
 			} catch (UnsupportedEncodingException e) {
-				Log.d("intent04", e.getMessage());
+				Log.d(TAG, e.getMessage());
 			}
 		}
 		return encoding;
@@ -113,44 +165,10 @@ public class HttpUtil {
 				detector.handleData(buf, 0, nread);
 			}
        } catch (IOException e) {
-			Log.d("intent04", e.getMessage());
+			Log.d(TAG, e.getMessage());
        }
        detector.dataEnd();
        return detector.getDetectedCharset();
-	}
-	
-	public static String getTitle(String url, String msg_no_title) {
-		String title = msg_no_title;
-		String html = getHtml(url);
-		if (html == null) return title;
-		
-		String html_lower = html.toLowerCase();
-
-		int startIndex = -1, p = 0;
-		int endIndex = html_lower.indexOf("</title>");
-		if (endIndex >= 0){ 
-			html_lower = html_lower.substring(0, endIndex);
-
-			p = html_lower.indexOf("<title>");
-			if (p >= 0){
-				startIndex = p+7;
-			} else {
-				p = html_lower.indexOf("<title ");
-				if (p > 0) {
-					p = html_lower.indexOf(">", p+7);
-					if (p > 0) startIndex = p+1;
-				}
-			}
-			if (startIndex >=0 && endIndex >= 0){
-				title = html.substring(startIndex, endIndex)
-							.replace("\n", "").replace("\r", "")
-							.trim();
-				
-				title = NCR2String(title);				//数値文字参照を変換
-				title = convertRefString(title);		//実体参照を変換
-			}
-		} 
-		return title;
 	}
 	
 
