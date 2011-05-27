@@ -17,7 +17,6 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.mozilla.universalchardet.UniversalDetector;
-
 import android.util.Log;
 
 public class HttpUtil {
@@ -43,19 +42,25 @@ public class HttpUtil {
 				HttpEntity entity = httpResponse.getEntity();
 				if (entity != null){
 					byte[] arr = EntityUtils.toByteArray(entity);
+					
+					//文字エンコーディングを判定
 					encoding = detectEncoding(arr);
 					if (encoding == null) encoding = findEncoding(entity, arr);
+					
+					//判定されたエンコーディングで文字列に変換
 					result = new String(arr, encoding);
-					entity.consumeContent();			// entityのリソースを解放
+					
+					//entityのリソースを解放
+					entity.consumeContent();			
 				}
 			}
 		
 		} catch (ClientProtocolException e) {
-			e.printStackTrace();
+			Log.d("intent04", e.getMessage());
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.d("intent04", e.getMessage());
 		} finally {
-			// クライアントを終了させる
+			//HTTPクライアントを終了させる
 			client.getConnectionManager().shutdown();
 		}
 		
@@ -91,7 +96,7 @@ public class HttpUtil {
 					}
 				}
 			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
+				Log.d("intent04", e.getMessage());
 			}
 		}
 		return encoding;
@@ -108,10 +113,10 @@ public class HttpUtil {
 				detector.handleData(buf, 0, nread);
 			}
        } catch (IOException e) {
-    	   e.printStackTrace();
-        }
+			Log.d("intent04", e.getMessage());
+       }
        detector.dataEnd();
-		return detector.getDetectedCharset();
+       return detector.getDetectedCharset();
 	}
 	
 	public static String getTitle(String url, String msg_no_title) {
@@ -140,16 +145,23 @@ public class HttpUtil {
 				title = html.substring(startIndex, endIndex)
 							.replace("\n", "").replace("\r", "")
 							.trim();
-				title =  NCR2String(title);
+				
+				title = NCR2String(title);				//数値文字参照を変換
+				title = convertRefString(title);		//実体参照を変換
 			}
 		} 
 		return title;
 	}
 	
 
-	//タイトルに含まれる数値文字参照を変換する。
-	// 例：　「&#65374;」→ 「〜」
-	static String NCR2String(String str) { 
+	/***
+	 * 文字列に含まれる数値文字参照を変換する。
+	 * 例：　「&#65374;」→ 「〜」
+	 * 
+	 * 参照元：	http://www.atmarkit.co.jp/bbs/phpBB/viewtopic.php?topic=12493&forum=12&start=8
+	 * 			http://www.free-drive.net/web/?p=325
+	 */
+	private static String NCR2String(String str) { 
 		if (str == null) return str;
 		
 		String ostr = new String(); 
@@ -184,6 +196,25 @@ public class HttpUtil {
 			i2++; 
 		} 
 		return ostr; 
+	}
+	
+	/***
+	 * 文字列に含まれる実体参照を変換する。(一部のみ対応)
+	 * 
+	 * 実体参照の一覧はこちら：  http://code.cside.com/3rdpage/jp/entity/converter.html
+	 */
+	private static String convertRefString(String s){
+		s = s.replace("&quot;", "\"");
+		s = s.replace("&amp;", "&");
+		s = s.replace("&lt;", "<");
+		s = s.replace("&gt;", ">");
+		s = s.replace("&nbsp;", " ");
+		s = s.replace("&yen;", "\\");
+		s = s.replace("&brvbar;", "¦");
+		s = s.replace("&copy;", "©");
+		s = s.replace("&hellip;", "…");
+		s = s.replace("&reg;", "®");
+		return s;
 	}
 	
 }

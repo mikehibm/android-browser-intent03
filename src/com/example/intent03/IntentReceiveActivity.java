@@ -226,7 +226,6 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 		try {
 			HistoryDb.delete(selectedUrl);
 		} catch (Exception e) {
-			e.printStackTrace();
 	    	showErrorDialog(e);
 		}
 		showList();
@@ -237,7 +236,6 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 		try {
 			HistoryDb.deleteAll();
 		} catch (Exception e) {
-			e.printStackTrace();
 	    	showErrorDialog(e);
 		}
 		showList();
@@ -332,7 +330,6 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 			startActivity(intent);
 		} 
 	    catch (Exception e) {
-	    	e.printStackTrace();
 	    	showErrorDialog(e);
 	    }
 	}
