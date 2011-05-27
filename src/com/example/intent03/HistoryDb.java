@@ -16,7 +16,7 @@ public class HistoryDb   {
 	
 	public static class HistoryItem{
 		//DBのフィールド
-		public int id = 0;
+		public long id = 0;
 		public String url = "";
 		public String title = "";
 	}
@@ -93,11 +93,7 @@ public class HistoryDb   {
 			Cursor cursor = db.query(TBL_HISTORY, columns, where, null, group_by, having, order_by);
 			while (cursor.moveToNext()){
 				HistoryItem hist = new HistoryItem();
-				hist.id = cursor.getInt(cursor.getColumnIndex("_id"));
-				hist.url = cursor.getString(cursor.getColumnIndex("url"));
-				hist.title = cursor.getString(cursor.getColumnIndex("title"));
-				if (hist.title == null) hist.title = "";
-				
+				loadPropertiesFromCursor(hist, cursor);
 				array.add(hist);
 			}
 			cursor.close();
@@ -110,21 +106,31 @@ public class HistoryDb   {
 		return array;
 	}
 	
-	public static void save(String url, String title) throws Exception {
+	private static void loadPropertiesFromCursor(HistoryItem hist, Cursor cursor){
+		hist.id = cursor.getInt(cursor.getColumnIndex("_id"));
+		hist.url = cursor.getString(cursor.getColumnIndex("url"));
+		hist.title = cursor.getString(cursor.getColumnIndex("title"));
+		if (hist.title == null) hist.title = "";
+	}
+	
+	public static HistoryItem save(String url, String title) throws Exception {
+		
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DbPath, null);
+		HistoryItem hist = null;
 		try {
-			//同じURLが既にあれば更新する。無ければ挿入する。
-			insertOrUpdateHistory(db, url, title);
+			//同じURLが既にあれば更新、無ければ挿入する。
+			hist = insertOrUpdateHistory(db, url, title);
 			
 		} catch (Exception e) {
 			throw e;
 		} finally{
 			db.close();
 		}
+		return hist;
 	}
 	
-	private static void insertOrUpdateHistory(SQLiteDatabase db, String url, String title) {
-		//urlで検索してあれば更新、無ければ挿入する。
+	//urlで検索してあれば更新、無ければ挿入する。
+	private static HistoryItem insertOrUpdateHistory(SQLiteDatabase db, String url, String title) {
 		String[] columns = {"_id", "url", "title"};
 		String where = "url = ?";
 		String[] args = { url };
@@ -133,19 +139,35 @@ public class HistoryDb   {
 		values.put("url", url);
 		values.put("title", title);
 
+		HistoryItem existing_item = null;
+		
 		Cursor cursor = db.query(TBL_HISTORY, columns, where, args, null, null, null);
-		boolean exists = cursor.moveToNext();
+		if (cursor.moveToNext()){
+			existing_item = new HistoryItem();
+			loadPropertiesFromCursor(existing_item, cursor);
+		}
 		cursor.close();
 
-		if (exists){
-			if (title != null && title != ""){
-				//同じURLが既に保存されていれば更新する。
-				db.update(TBL_HISTORY, values, "url = ?", args );
+		if (existing_item != null){
+			if (title != null && !"".equals(title)){
+				//オフライン時はtitleとurlに同じ文字列がセットされて呼ばれるが、その場合は既存のレコードのtitleを上書きしない。
+				if (!title.equals(url) || existing_item.title == null){
+					//同じURLが既に保存されていれば更新する。
+					db.update(TBL_HISTORY, values, "url = ?", args );
+					existing_item.title = title;
+				}
 			}
 		} else {
 			//無ければ挿入する。
-			db.insert(TBL_HISTORY, null, values);
+			long newid = db.insert(TBL_HISTORY, null, values);
+			
+			existing_item = new HistoryItem();
+			existing_item.id = newid;
+			existing_item.url = url;
+			existing_item.title = title;
 		}
+		
+		return existing_item;
 	}
 
 	public static void delete(String url) throws Exception {

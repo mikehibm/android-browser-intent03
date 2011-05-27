@@ -126,13 +126,15 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 
 					//データベースに保存。
 					HistoryDb.save(url, null);
+					showListItem(url);
 
 					//別スレッドでタイトルの取得処理を開始。
 					new Thread(this).start();
 					
 				} else {
-					//データベースに保存。(オフライン時はURLをタイトルにする)
+					//データベースに保存。(オフライン時はタイトルをURLと同じにする)
 					HistoryDb.save(url, url);
+					showListItem(url);
 				}
 			} catch (Exception e) {
 		    	showErrorDialog(e);
@@ -216,6 +218,19 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 			if (url.equals(item.url)){
 				item.title = title;
 				adapter.notifyDataSetChanged();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	//ListViewを指定されたURLの行までスクロールする。
+	private boolean showListItem(String url){
+		for (int i = 0; i < adapter.getCount(); i++) {
+			HistoryDb.HistoryItem item = adapter.getItem(i);
+			if (url.equals(item.url)){
+				ListView listview = (ListView)findViewById(R.id.list);
+				listview.setSelection(i);
 				return true;
 			}
 		}
