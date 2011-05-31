@@ -91,19 +91,29 @@ public class HttpUtil {
 			int status = httpResponse.getStatusLine().getStatusCode();
 
 			if (HttpStatus.SC_OK == status){
-				HttpEntity entity = httpResponse.getEntity();
-				if (entity != null){
-					byte[] arr = EntityUtils.toByteArray(entity);
-					
-					//文字エンコーディングを判定
-					encoding = detectEncoding(arr);
-					if (encoding == null) encoding = findEncoding(entity, arr);
-					
-					//判定されたエンコーディングで文字列に変換
-					result = new String(arr, encoding);
-					
-					//entityのリソースを解放
-					entity.consumeContent();			
+				//Content-Typeを取得
+				Header[] headers = httpResponse.getHeaders("Content-Type");
+				if (headers.length > 0) { 
+					String contentType = "";
+					contentType = headers[0].getValue();
+					if (contentType.contains("text/html")){
+
+						//HTMLを取得
+						HttpEntity entity = httpResponse.getEntity();
+						if (entity != null){
+							byte[] arr = EntityUtils.toByteArray(entity);
+							
+							//文字エンコーディングを判定
+							encoding = detectEncoding(arr);
+							if (encoding == null) encoding = findEncoding(entity, arr);
+							
+							//判定されたエンコーディングでバイト配列から文字列に変換
+							result = new String(arr, encoding);
+							
+							//entityのリソースを解放
+							entity.consumeContent();			
+						}
+					}
 				}
 			}
 		
@@ -119,57 +129,58 @@ public class HttpUtil {
 		return result;
 	}
 	
+	private static String detectEncoding(byte[] arr){
+	       byte[] buf = new byte[4096];
+	       ByteArrayInputStream stream = new ByteArrayInputStream(arr);
+			UniversalDetector detector = new UniversalDetector(null);
+
+			try {
+				int nread;
+				while ((nread = stream.read(buf)) > 0 && !detector.isDone()) {
+					detector.handleData(buf, 0, nread);
+				}
+	       } catch (IOException e) {
+				Log.d(TAG, e.getMessage());
+	       }
+	       detector.dataEnd();
+	       return detector.getDetectedCharset();
+		}
+		
 	private static String findEncoding(HttpEntity entity, byte[] arr){
 		String encoding = "UTF-8";
 		
 		Header enc = entity.getContentEncoding();
 		if (enc != null){ 
 			encoding = enc.getName();
-		} else {
-			try {
-				String result = new String(arr, encoding);
+			return encoding;
+		} 
+		
+		try {
+			String result = new String(arr, encoding);
 
-				String regexp1 = "<meta (.*)charset(.*)";
-				Pattern pattern = Pattern.compile(regexp1);
-				Matcher matcher = pattern.matcher(result);
-				while (matcher.find()) {
-					String metaline = matcher.group(2);
+			String regexp1 = "<meta (.*)charset(.*)";
+			Pattern pattern = Pattern.compile(regexp1);
+			Matcher matcher = pattern.matcher(result);
+			while (matcher.find()) {
+				String metaline = matcher.group(2);
 
-					//<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />		
-					if (metaline.toLowerCase().contains("shift_jis")){
-						encoding = "Shift_JIS";
-						break;
-					}
-
-					//<meta http-equiv="Content-Type" content="text/html; charset=euc-jp" />
-					if (metaline.toLowerCase().contains("euc-jp")){
-						encoding = "euc-jp";
-						break;
-					}
+				//<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />		
+				if (metaline.toLowerCase().contains("shift_jis")){
+					encoding = "Shift_JIS";
+					break;
 				}
-			} catch (UnsupportedEncodingException e) {
-				Log.d(TAG, e.getMessage());
+
+				//<meta http-equiv="Content-Type" content="text/html; charset=euc-jp" />
+				if (metaline.toLowerCase().contains("euc-jp")){
+					encoding = "euc-jp";
+					break;
+				}
 			}
+		} catch (UnsupportedEncodingException e) {
+			Log.d(TAG, e.getMessage());
 		}
 		return encoding;
 	} 
-	
-	private static String detectEncoding(byte[] arr){
-       byte[] buf = new byte[4096];
-       ByteArrayInputStream stream = new ByteArrayInputStream(arr);
-		UniversalDetector detector = new UniversalDetector(null);
-
-		try {
-			int nread;
-			while ((nread = stream.read(buf)) > 0 && !detector.isDone()) {
-				detector.handleData(buf, 0, nread);
-			}
-       } catch (IOException e) {
-			Log.d(TAG, e.getMessage());
-       }
-       detector.dataEnd();
-       return detector.getDetectedCharset();
-	}
 	
 
 	/***
@@ -232,6 +243,13 @@ public class HttpUtil {
 		s = s.replace("&copy;", "©");
 		s = s.replace("&hellip;", "…");
 		s = s.replace("&reg;", "®");
+		s = s.replace("&ndash;", "–");
+		s = s.replace("&mdash;", "—");
+		s = s.replace("&lsquo;", "‘");
+		s = s.replace("&rsquo;", "’");
+		s = s.replace("&ldquo;", "“");
+		s = s.replace("&rdquo;", "”");
+		s = s.replace("&bull;", "•");
 		return s;
 	}
 	
