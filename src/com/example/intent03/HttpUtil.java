@@ -75,7 +75,6 @@ public class HttpUtil {
 	 */
 	public static String getHtml(String url){
 		String result = null;
-		String encoding = "UTF-8";
 		
 		HttpGet httpGet = new HttpGet(url);
 		DefaultHttpClient client = new DefaultHttpClient();
@@ -104,7 +103,7 @@ public class HttpUtil {
 							byte[] arr = EntityUtils.toByteArray(entity);
 							
 							//文字エンコーディングを判定
-							encoding = detectEncoding(arr);
+							String encoding = detectEncoding(arr);
 							if (encoding == null) encoding = findEncoding(entity, arr);
 							
 							//判定されたエンコーディングでバイト配列から文字列に変換
@@ -129,48 +128,53 @@ public class HttpUtil {
 		return result;
 	}
 	
+	//UniversalDetectorクラスを使ってエンコーディングを判別する。
 	private static String detectEncoding(byte[] arr){
-	       byte[] buf = new byte[4096];
-	       ByteArrayInputStream stream = new ByteArrayInputStream(arr);
-			UniversalDetector detector = new UniversalDetector(null);
+		byte[] buf = new byte[4096];
+		ByteArrayInputStream stream = new ByteArrayInputStream(arr);
+		UniversalDetector detector = new UniversalDetector(null);
 
-			try {
-				int nread;
-				while ((nread = stream.read(buf)) > 0 && !detector.isDone()) {
-					detector.handleData(buf, 0, nread);
-				}
-	       } catch (IOException e) {
-				Log.d(TAG, e.getMessage());
-	       }
-	       detector.dataEnd();
-	       return detector.getDetectedCharset();
+		try {
+			int nread;
+			while ((nread = stream.read(buf)) > 0 && !detector.isDone()) {
+				detector.handleData(buf, 0, nread);
+			}
+		} catch (IOException e) {
+			Log.d(TAG, e.getMessage());
 		}
+		detector.dataEnd();
+		return detector.getDetectedCharset();
+	}
 		
 	private static String findEncoding(HttpEntity entity, byte[] arr){
-		String encoding = "UTF-8";
-		
-		Header enc = entity.getContentEncoding();
-		if (enc != null){ 
-			encoding = enc.getName();
-			return encoding;
-		} 
-		
-		try {
-			String result = new String(arr, encoding);
 
-			String regexp1 = "<meta (.*)charset(.*)";
+		//HTTP Responseヘッダでエンコーディングが示されている場合はそれを返す。
+		Header enc = entity.getContentEncoding();
+		if (enc != null){
+			String header_encoding = enc.getName();
+			if (header_encoding != null){
+				return header_encoding;				
+			}
+		} 
+
+		//charset属性を含むmetaタグを探してその値を返す。
+		String encoding = "UTF-8";
+		try {
+			String result = new String(arr, encoding);		//一旦UTF-8で文字列に変換。
+
+			String regexp1 = "<meta (.*)charset(.*)";		
 			Pattern pattern = Pattern.compile(regexp1);
 			Matcher matcher = pattern.matcher(result);
 			while (matcher.find()) {
 				String metaline = matcher.group(2);
 
-				//<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />		
+				//例：　<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS" />		
 				if (metaline.toLowerCase().contains("shift_jis")){
 					encoding = "Shift_JIS";
 					break;
 				}
 
-				//<meta http-equiv="Content-Type" content="text/html; charset=euc-jp" />
+				//例：　<meta http-equiv="Content-Type" content="text/html; charset=euc-jp" />
 				if (metaline.toLowerCase().contains("euc-jp")){
 					encoding = "euc-jp";
 					break;
