@@ -10,7 +10,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -104,16 +104,6 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	private void processIntent(Intent intent) {
     	
     	if (Intent.ACTION_VIEW.equals(intent.getAction()) ){
-			Log.d("inten04", "describeContents=" + intent.describeContents());
-//			Log.d("inten04", "Type=" + intent.getType());
-//			if (intent.getCategories() != null){
-//				Log.d("inten04", "Categories().size=" + intent.getCategories().size());
-//			} else {
-//				Log.d("inten04", "Categories()=null");
-//			}
-//			Log.d("inten04", "toUri(0)=" + intent.toUri(0));
-//			Log.d("inten04", "Flags=" + intent.getFlags());
-
 			try {
 				String url = intent.getDataString();
 
@@ -351,7 +341,7 @@ public class IntentReceiveActivity extends Activity implements Runnable {
 	
 	//設定内容をチェックする。
 	private void ValidateBeforeSend(String to_addr) throws Exception {
-		if (to_addr == null || "".equals(to_addr)){
+		if (TextUtils.isEmpty(to_addr)){
 			throw new Exception(getString(R.string.msg_invalid_to_addr));
 		}
 	}

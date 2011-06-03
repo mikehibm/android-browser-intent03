@@ -17,7 +17,9 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.mozilla.universalchardet.UniversalDetector;
+import android.text.TextUtils;
 import android.util.Log;
+
 
 public class HttpUtil {
 	
@@ -57,7 +59,8 @@ public class HttpUtil {
 			if (startIndex >=0 && endIndex >= 0){
 				//見つかった始点から終点までを抜き出す。同時に改行と空白を除去する。
 				title = html.substring(startIndex, endIndex)
-							.replace("\n", "").replace("\r", "")
+							.replace("\n", "")
+							.replace("\r", "")
 							.trim();
 				
 				title = NCR2String(title);				//数値文字参照を変換
@@ -195,7 +198,7 @@ public class HttpUtil {
 	 * 			http://www.free-drive.net/web/?p=325
 	 */
 	private static String NCR2String(String str) { 
-		if (str == null) return str;
+		if (TextUtils.isEmpty(str)) return str;
 		
 		String ostr = new String(); 
 		int i1 = 0; 
@@ -237,23 +240,25 @@ public class HttpUtil {
 	 * 実体参照の一覧はこちら：  http://code.cside.com/3rdpage/jp/entity/converter.html
 	 */
 	private static String convertRefString(String s){
-		s = s.replace("&quot;", "\"");
-		s = s.replace("&amp;", "&");
-		s = s.replace("&lt;", "<");
-		s = s.replace("&gt;", ">");
-		s = s.replace("&nbsp;", " ");
-		s = s.replace("&yen;", "\\");
-		s = s.replace("&brvbar;", "¦");
-		s = s.replace("&copy;", "©");
-		s = s.replace("&hellip;", "…");
-		s = s.replace("&reg;", "®");
-		s = s.replace("&ndash;", "–");
-		s = s.replace("&mdash;", "—");
-		s = s.replace("&lsquo;", "‘");
-		s = s.replace("&rsquo;", "’");
-		s = s.replace("&ldquo;", "“");
-		s = s.replace("&rdquo;", "”");
-		s = s.replace("&bull;", "•");
+		if (TextUtils.isEmpty(s)) return s;
+		
+		s = s.replace("&quot;", "\"")
+			.replace("&amp;", "&")
+			.replace("&lt;", "<")
+			.replace("&gt;", ">")
+			.replace("&nbsp;", " ")
+			.replace("&yen;", "\\")
+			.replace("&brvbar;", "¦")
+			.replace("&copy;", "©")
+			.replace("&hellip;", "…")
+			.replace("&reg;", "®")
+			.replace("&ndash;", "–")
+			.replace("&mdash;", "—")
+			.replace("&lsquo;", "‘")
+			.replace("&rsquo;", "’")
+			.replace("&ldquo;", "“")
+			.replace("&rdquo;", "”")
+			.replace("&bull;", "•");
 		return s;
 	}
 	
