@@ -27,19 +27,19 @@ public class ListItemAdapter extends ArrayAdapter<HistoryDb.HistoryItem> {
 		
 		View view = mInflater.inflate(R.layout.list_item, null);
 		
-		TextView url = (TextView)view.findViewById(R.id.txtListUrl);
-		url.setText(item.url);
+		TextView txtListUrl = (TextView)view.findViewById(R.id.txtListUrl);
+		txtListUrl.setText(item.url);
 
 		FrameLayout framelayout = (FrameLayout)view.findViewById(R.id.frmLayout);
-		TextView title = (TextView)framelayout.findViewById(R.id.txtListTitle);
+		TextView txtListTitle = (TextView)framelayout.findViewById(R.id.txtListTitle);
 		ProgressBar prgBar = (ProgressBar)framelayout.findViewById(R.id.prgBar);
 		
 		if (TextUtils.isEmpty(item.title)){
-			title.setText(getContext().getString(R.string.msg_initial_title));
-    		title.setPadding(30, 0, 0, 0);
+			txtListTitle.setText(getContext().getString(R.string.msg_initial_title));
+			txtListTitle.setPadding(30, 0, 0, 0);
 			prgBar.setVisibility(View.VISIBLE);
 		} else {
-			title.setText(item.title);
+			txtListTitle.setText(item.title);
 			prgBar.setVisibility(View.INVISIBLE);
 		}
 
