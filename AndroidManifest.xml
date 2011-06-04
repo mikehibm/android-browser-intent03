@@ -10,11 +10,11 @@
     	android:icon="@drawable/icon" 
     	android:label="@string/app_name"
     	android:debuggable="true" 
+		android:theme="@android:style/Theme.Light" 
     	>
     	
         <activity android:name="IntentReceiveActivity"
                   android:label="@string/app_name"
-		    	  android:theme="@android:style/Theme.Light" 
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
