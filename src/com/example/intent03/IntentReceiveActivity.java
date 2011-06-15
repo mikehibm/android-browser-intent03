@@ -132,15 +132,15 @@ public class IntentReceiveActivity extends Activity implements Runnable {
     	}
 	}
 	
+	
 	//別スレッドで処理する
 	@Override
 	public void run() {
-		Intent intent = getIntent();
-		final String url = intent.getDataString();
 
 		//HTTP通信を実行してページのタイトルを取得
+		final String url = getIntent().getDataString();
 		final String title = HttpUtil.getTitle(url, getString(R.string.msg_no_title));
-
+		
 		//処理完了後、ハンドラにUIスレッド側で実行する処理を渡す。
 		mHandler.post(new Runnable(){
 			@Override
